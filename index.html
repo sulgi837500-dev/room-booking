@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공유설비예약 | 학생맞춤통합지원센터</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "맑은 고딕", "Malgun Gothic", Dotum, sans-serif;
+    font-size: 12px; color: #333; background: #fff;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; font-size: 12px; }
+
+  /* ===== 로그인 ===== */
+  #loginView {
+    position: fixed; inset: 0; background: #f0f3f7;
+    display: flex; align-items: center; justify-content: center; z-index: 500;
+  }
+  .login-box { width: 360px; background: #fff; border: 1px solid #c8d1dc; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+  .login-head { background: #2b3a52; color: #fff; padding: 18px 20px; }
+  .login-head h1 { font-size: 17px; font-weight: bold; letter-spacing: -.5px; }
+  .login-head p { font-size: 11px; color: #a9b8cf; margin-top: 4px; }
+  .login-body { padding: 22px 20px; }
+  .login-body label { display: block; font-size: 11px; color: #555; margin-bottom: 4px; }
+  .login-body input { width: 100%; padding: 8px; border: 1px solid #c5cdd8; margin-bottom: 12px; }
+  .login-body input:focus { outline: 2px solid #3b6ea5; outline-offset: -1px; }
+  .btn-login { width: 100%; padding: 10px; background: #3b6ea5; color: #fff; border: none; font-size: 13px; font-weight: bold; }
+  .btn-login:hover { background: #325d8c; }
+  .btn-login:disabled { background: #9aa8b8; }
+  .login-msg { color: #c0392b; font-size: 11px; min-height: 15px; margin-bottom: 8px; line-height: 1.5; }
+  .login-foot { padding: 10px 20px; background: #f7f9fb; border-top: 1px solid #e3e8ee; font-size: 11px; color: #7a8697; line-height: 1.6; }
+
+  /* ===== 헤더 ===== */
+  .topbar { height: 34px; background: #fff; border-bottom: 1px solid #dde3ea; display: flex; align-items: center; padding: 0 12px; gap: 14px; }
+  .logo { font-size: 16px; font-weight: bold; color: #1a5490; letter-spacing: -1px; }
+  .logo span { color: #4a9e2f; }
+  .topbar .spacer { flex: 1; }
+  .who { font-size: 11px; color: #555; }
+  .who b { color: #1a5490; }
+  .btn-out { border: 1px solid #c5cdd8; background: #fff; padding: 3px 9px; font-size: 11px; color: #555; }
+  .gnb { height: 34px; background: #2b3a52; display: flex; align-items: stretch; padding-left: 12px; }
+  .gnb div { padding: 0 18px; color: #c5d0e0; font-size: 12px; display: flex; align-items: center; }
+  .gnb div.on { background: #111d2e; color: #fff; font-weight: bold; }
+
+  /* ===== 페이지 타이틀 ===== */
+  .ptitle { height: 40px; display: flex; align-items: center; padding: 0 14px; border-bottom: 1px solid #dde3ea; gap: 8px; }
+  .ptitle h2 { font-size: 15px; color: #222; letter-spacing: -.5px; }
+  .ptitle .crumb { font-size: 11px; color: #8b96a5; }
+  .ptitle .spacer { flex: 1; }
+  .btn-g { background: #4a9e2f; color: #fff; border: none; padding: 5px 12px; font-size: 11px; font-weight: bold; }
+  .btn-g:hover { background: #3d8626; }
+  .btn-g:disabled { background: #a8c79a; }
+  .btn-n { background: #6b7787; color: #fff; border: none; padding: 5px 12px; font-size: 11px; }
+  .btn-n:hover { background: #5a6675; }
+
+  /* ===== 본문 ===== */
+  .wrap { display: flex; gap: 10px; padding: 10px 14px; align-items: flex-start; }
+  .side { width: 250px; flex-shrink: 0; }
+  .main { flex: 1; min-width: 0; }
+  .panel { border: 1px solid #d4dae2; margin-bottom: 10px; }
+  .panel-h { background: #eef2f6; border-bottom: 1px solid #d4dae2; padding: 6px 8px; font-weight: bold; color: #2b3a52; font-size: 12px; }
+  .panel-h::before { content: ''; display: inline-block; width: 3px; height: 11px; background: #4a9e2f; margin-right: 5px; vertical-align: -1px; }
+  .room-list { list-style: none; }
+  .room-list li { padding: 7px 8px; border-bottom: 1px solid #e8ecf1; text-align: center; color: #444; font-size: 12px; cursor: pointer; }
+  .room-list li:hover { background: #f4f8fc; }
+  .room-list li.on { background: #d6e6f5; font-weight: bold; color: #1a5490; }
+  .room-list li small { display: block; color: #8b96a5; font-weight: normal; font-size: 10px; margin-top: 2px; }
+  .room-list li.on small { color: #4a7ba8; }
+  .info-body { padding: 10px 9px; line-height: 1.8; color: #555; }
+  .info-body b { color: #2b3a52; }
+  .info-tag { background: #eaf5e4; border: 1px solid #cbe3bd; color: #3d7a24; padding: 5px 7px; margin-bottom: 8px; line-height: 1.6; }
+
+  /* ===== 달력 ===== */
+  .cal-head { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid #d4dae2; border-bottom: none; background: #fbfcfd; }
+  .cal-head .room-name { font-weight: bold; color: #2b3a52; font-size: 13px; }
+  .cal-head .room-name::before { content: ''; display: inline-block; width: 3px; height: 11px; background: #4a9e2f; margin-right: 5px; vertical-align: -1px; }
+  .cal-head .spacer { flex: 1; }
+  .nav-btn { border: 1px solid #ccd4dd; background: #fff; width: 22px; height: 22px; color: #55606e; }
+  .nav-btn:hover { background: #eef2f6; }
+  .cal-head select { border: 1px solid #c5cdd8; padding: 3px 4px; }
+  .mine-check { font-size: 11px; color: #555; display: flex; align-items: center; gap: 4px; }
+  table.cal { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  table.cal th { background: #55606e; color: #fff; font-size: 12px; font-weight: normal; padding: 6px 0; border: 1px solid #46505c; }
+  table.cal td { border: 1px solid #dde3ea; height: 92px; vertical-align: top; padding: 3px; overflow: hidden; }
+  table.cal td.pad { background: #fafbfc; }
+  table.cal td.today { background: #fffdf0; }
+  .daynum { font-size: 12px; color: #444; padding: 1px 2px; }
+  .daynum.sun { color: #d43f3a; }
+  .daynum.sat { color: #3b6ea5; }
+  td.clickable { cursor: pointer; }
+  td.clickable:hover { background: #f2f8fd; }
+  .bk { margin-top: 2px; padding: 2px 3px; font-size: 10px; line-height: 1.35; border-left: 3px solid #3b6ea5; background: #eef4fa; color: #24445f; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk:hover { background: #dfeaf6; }
+  .bk.mine { border-left-color: #4a9e2f; background: #eef7e9; color: #33641d; }
+  .bk .t { font-weight: bold; }
+  .legend { display: flex; gap: 14px; padding: 7px 8px; border: 1px solid #d4dae2; border-top: none; font-size: 11px; color: #555; align-items: center; flex-wrap: wrap; }
+  .dot { display: inline-block; width: 9px; height: 9px; margin-right: 4px; vertical-align: -1px; }
+
+  /* ===== 모달 ===== */
+  .dim { position: fixed; inset: 0; background: rgba(15,25,40,.45); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; z-index: 300; }
+  .modal { background: #fff; border: 1px solid #1a5490; width: 100%; max-width: 720px; }
+  .modal-h { background: #3b6ea5; color: #fff; padding: 7px 10px; display: flex; align-items: center; font-weight: bold; font-size: 13px; }
+  .modal-h .spacer { flex: 1; }
+  .x { background: none; border: none; color: #fff; font-size: 13px; }
+  .modal-b { padding: 14px; }
+  .modal-btns { display: flex; justify-content: flex-end; gap: 5px; margin-bottom: 10px; }
+  table.form { width: 100%; border-collapse: collapse; }
+  table.form th { background: #eef2f6; border: 1px solid #d4dae2; padding: 7px 8px; text-align: left; font-weight: normal; color: #3a4553; width: 96px; font-size: 12px; }
+  table.form th.req::before { content: '＊'; color: #d43f3a; margin-right: 2px; }
+  table.form td { border: 1px solid #d4dae2; padding: 5px 7px; }
+  table.form input[type=text], table.form input[type=number], table.form textarea, table.form select { border: 1px solid #c5cdd8; padding: 5px; width: 100%; }
+  table.form input:read-only { background: #f2f4f7; color: #666; }
+  table.form textarea { height: 62px; resize: vertical; }
+  .time-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .time-row input[type=date] { border: 1px solid #c5cdd8; padding: 5px; }
+  .time-row select { width: auto; }
+  .hint { color: #8b96a5; font-size: 11px; }
+  .chk { display: inline-flex; align-items: center; gap: 4px; margin-right: 16px; }
+  .avail { margin-top: 6px; padding: 6px 7px; background: #f7f9fb; border: 1px solid #e3e8ee; font-size: 11px; line-height: 1.7; color: #55606e; }
+  .avail b { color: #24445f; }
+  .err { background: #fdeeed; border: 1px solid #f0c2be; color: #c0392b; padding: 7px 9px; margin-bottom: 10px; line-height: 1.6; }
+  .guide { margin-top: 12px; background: #f4f8fc; border: 1px solid #d3e2f0; padding: 9px 11px; color: #3d5771; line-height: 1.9; }
+  .guide b { display: block; margin-bottom: 3px; color: #1a5490; }
+  .warn { background: #fff8e6; border: 1px solid #ecd9a0; color: #7a6117; padding: 7px 9px; line-height: 1.7; margin-top: 6px; }
+  .warn b { color: #8a6d1c; }
+  table.grid { width: 100%; border-collapse: collapse; }
+  table.grid th { background: #55606e; color: #fff; font-weight: normal; padding: 6px 4px; border: 1px solid #46505c; font-size: 11px; }
+  table.grid td { border: 1px solid #dde3ea; padding: 6px 5px; text-align: center; }
+  table.grid tr:hover td { background: #f7fafd; }
+  .empty { padding: 60px 0; text-align: center; color: #8b96a5; }
+  .count { padding: 7px 4px; font-size: 11px; color: #555; }
+  .count b { color: #1a5490; }
+  .btn-x { border: 1px solid #d9a7a3; background: #fdf3f2; color: #c0392b; padding: 2px 8px; font-size: 11px; }
+  .btn-x:hover { background: #f9e3e1; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2b3a52; color: #fff; padding: 10px 20px; font-size: 12px; z-index: 900; box-shadow: 0 3px 12px rgba(0,0,0,.25); }
+  .toast.bad { background: #c0392b; }
+  .demo-bar { background: #fff6db; border-bottom: 1px solid #ecd9a0; color: #8a6d1c; padding: 5px 14px; font-size: 11px; }
+
+  /* ===== 배치도 ===== */
+  .plan-scroll { overflow-x: auto; padding-bottom: 4px; }
+  .plan-floor { margin-bottom: 16px; min-width: 880px; }
+  .plan-floor h4 { font-size: 12px; color: #2b3a52; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+  .plan-floor h4::before { content: ''; width: 3px; height: 11px; background: #4a9e2f; }
+  .plan-floor h4 span { font-weight: normal; color: #8b96a5; font-size: 11px; }
+  .plan { display: grid; grid-template-columns: repeat(42, 1fr); grid-auto-rows: 42px; gap: 1px; background: #eef1f5; border: 1px solid #ccd4dd; padding: 1px; }
+  .pc { display: flex; align-items: center; justify-content: center; text-align: center; font-size: 10px; line-height: 1.25; overflow: hidden; padding: 1px; white-space: pre-line; word-break: keep-all; }
+  .pc.room { background: #f7f8fa; border: 1px solid #dbe1e8; color: #6b7787; }
+  .pc.fac  { background: #e7eaee; color: #939eab; font-size: 9px; }
+  .pc.corr { background: transparent; color: #a8b2be; font-size: 11px; }
+  .pc.note { background: transparent; color: #4a9e2f; font-size: 10px; justify-content: flex-start; white-space: nowrap; }
+  .pc.able { background: #eaf5e4; border: 1px solid #7bbd5b; color: #2f6b18; cursor: pointer; font-weight: bold; }
+  .pc.able:hover { background: #d6ecca; border-color: #4a9e2f; }
+  .pc.able.here { background: #4a9e2f; border-color: #3d8626; color: #fff; }
+  .pc .own { display: block; font-size: 8px; font-weight: normal; opacity: .75; margin-top: 1px; }
+  .plan-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: #55606e; align-items: center; padding: 8px 0 2px; }
+  .swatch { display: inline-block; width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; border: 1px solid #ccd4dd; }
+
+  @media (max-width: 900px) {
+    .wrap { flex-direction: column; }
+    .side { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="login-box">
+    <div class="login-head">
+      <h1>공유설비예약</h1>
+      <p>인천광역시교육청 학생맞춤통합지원센터 (인천고 신관동)</p>
+    </div>
+    <div class="login-body">
+      <label for="lid">아이디</label>
+      <input type="text" id="lid" autocomplete="username">
+      <label for="lpw">비밀번호</label>
+      <input type="password" id="lpw" autocomplete="current-password">
+      <div class="login-msg" id="lmsg"></div>
+      <button class="btn-login" id="btnLogin">로그인</button>
+    </div>
+    <div class="login-foot">
+      센터별 공용 계정으로 로그인합니다.<br>
+      계정 문의: 초등교육과 기초학력·인성교육팀
+    </div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="demo-bar" id="demoBar" style="display:none">
+    체험 모드입니다. Supabase 설정을 넣기 전까지 예약 내용은 이 브라우저에만 저장되고 새로고침하면 사라집니다.
+  </div>
+
+  <div class="topbar">
+    <div class="logo">학생맞춤<span>통합지원센터</span></div>
+    <div class="spacer"></div>
+    <div class="who"><b id="whoCenter"></b></div>
+    <button class="btn-out" id="btnLogout">로그아웃</button>
+  </div>
+
+  <div class="gnb">
+    <div>일정관리</div><div>문서관리</div><div>메모관리</div>
+    <div class="on">업무지원</div><div>자료집계</div>
+  </div>
+
+  <div class="ptitle">
+    <h2>공유설비예약</h2>
+    <span class="crumb">＞ 업무지원 ＞ 공유설비예약</span>
+    <div class="spacer"></div>
+    <button class="btn-g" id="btnNew">예약신청</button>
+    <button class="btn-g" id="btnMine">나의예약</button>
+    <button class="btn-n" id="btnPlan">배치도</button>
+    <button class="btn-n" id="btnList">목록</button>
+  </div>
+
+  <div class="wrap">
+    <div class="side">
+      <div class="panel">
+        <div class="panel-h">공유설비 목록</div>
+        <ul class="room-list" id="roomList"></ul>
+        <div style="padding:7px 8px;border-top:1px solid #d4dae2;background:#fbfcfd">
+          <button class="btn-n" id="btnPlan2" style="width:100%">신관동 배치도에서 고르기</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-h">공유설비 안내사항</div>
+        <div class="info-body" id="roomInfo"></div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="cal-head">
+        <span class="room-name" id="calRoom"></span>
+        <div class="spacer"></div>
+        <button class="nav-btn" id="prevY" title="이전 연도">«</button>
+        <button class="nav-btn" id="prevM" title="이전 달">‹</button>
+        <select id="selY"></select>
+        <select id="selM"></select>
+        <button class="nav-btn" id="nextM" title="다음 달">›</button>
+        <button class="nav-btn" id="nextY" title="다음 연도">»</button>
+        <div style="width:14px"></div>
+        <label class="mine-check"><input type="checkbox" id="onlyMine"> 우리 센터 예약만 보기</label>
+      </div>
+      <table class="cal">
+        <thead><tr>
+          <th style="width:14.28%">일요일</th><th>월요일</th><th>화요일</th><th>수요일</th>
+          <th>목요일</th><th>금요일</th><th>토요일</th>
+        </tr></thead>
+        <tbody id="calBody"></tbody>
+      </table>
+      <div class="legend">
+        <span><i class="dot" style="background:#3b6ea5"></i>다른 센터 예약</span>
+        <span><i class="dot" style="background:#4a9e2f"></i>우리 센터 예약</span>
+        <span style="color:#8b96a5">날짜를 클릭하면 그 날짜로 예약신청 창이 열립니다.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script type="module">
+/* ============================================================
+   [1] 설정 ― 여기 두 줄만 채우면 실제 운영으로 바뀝니다.
+       Supabase 대시보드 → Project Settings → API 에서 복사합니다.
+       anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
+   ============================================================ */
+const SUPABASE_URL      = "";   // 예: https://abcdefgh.supabase.co
+const SUPABASE_ANON_KEY = "";   // 예: eyJhbGciOi...
+
+// 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
+const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
+
+/* ============================================================
+   [2] 신관동 배치도 ― 원본 배치도(안)의 셀 좌표를 그대로 옮긴 것
+       r/c = 층 안에서의 행·열 위치, rs/cs = 병합 칸 수
+       ※ 예약 가능 여부는 여기가 아니라 rooms 표가 정합니다.
+   ============================================================ */
+const FLOORPLAN = {"3":[{"r":1,"rs":6,"c":39,"cs":4,"t":"다목적실\n308"},{"r":2,"rs":5,"c":1,"cs":4,"t":"강의실\n301"},{"r":2,"rs":1,"c":7,"cs":1,"t":"<3층 전체: 공용공간>"},{"r":2,"rs":1,"c":13,"cs":1,"t":"복"},{"r":2,"rs":1,"c":16,"cs":1,"t":"도"},{"r":2,"rs":5,"c":35,"cs":4,"t":"다목적실\n307"},{"r":3,"rs":4,"c":7,"cs":2,"t":"화장실\n(남)"},{"r":3,"rs":4,"c":9,"cs":2,"t":"화장실\n(여)"},{"r":3,"rs":4,"c":11,"cs":4,"t":"회의실\n302"},{"r":3,"rs":4,"c":15,"cs":4,"t":"강의실\n303"},{"r":3,"rs":4,"c":19,"cs":4,"t":"강의실\n303"},{"r":3,"rs":4,"c":23,"cs":4,"t":"다목적실\n304"},{"r":3,"rs":4,"c":27,"cs":4,"t":"다목적실\n305"},{"r":3,"rs":4,"c":31,"cs":2,"t":"다목적실\n306\n[학습종합\n클리닉센터]"},{"r":3,"rs":4,"c":33,"cs":2,"t":"계단"},{"r":6,"rs":1,"c":5,"cs":2,"t":"계단실"}],"2":[{"r":1,"rs":6,"c":39,"cs":4,"t":"모둠활동실\n207\n[(신규)결대로\n진로센터]"},{"r":2,"rs":5,"c":1,"cs":4,"t":"강의실\n201\n[(신규)다문화교육\n지원센터]"},{"r":2,"rs":1,"c":12,"cs":1,"t":"복"},{"r":2,"rs":1,"c":14,"cs":1,"t":"도"},{"r":2,"rs":5,"c":35,"cs":4,"t":"강의실\n206\n[(신규)결대로\n진로센터]"},{"r":3,"rs":4,"c":7,"cs":2,"t":"화장실\n(남)"},{"r":3,"rs":4,"c":9,"cs":2,"t":"화장실\n(여)"},{"r":3,"rs":4,"c":11,"cs":12,"t":"사무실  202"},{"r":3,"rs":4,"c":23,"cs":4,"t":"스터디카페\n203\n[(신규)결대로\n진로센터]"},{"r":3,"rs":2,"c":27,"cs":2,"t":"상담실홀\n[(신규)결대로\n진로센터]"},{"r":3,"rs":2,"c":29,"cs":2,"t":"상담실3\n204-3"},{"r":3,"rs":4,"c":31,"cs":2,"t":"휴게실\n205\n[학습종합\n클리닉센터]"},{"r":3,"rs":4,"c":33,"cs":2,"t":"계단"},{"r":5,"rs":2,"c":27,"cs":2,"t":"상담실1\n204-1"},{"r":5,"rs":2,"c":29,"cs":2,"t":"상담실2\n204-2"},{"r":6,"rs":1,"c":5,"cs":2,"t":"계단실"}],"1":[{"r":1,"rs":1,"c":39,"cs":4,"t":"서고 107"},{"r":2,"rs":5,"c":1,"cs":4,"t":"당구교육실\n101"},{"r":2,"rs":5,"c":5,"cs":2,"t":"계단실"},{"r":2,"rs":1,"c":12,"cs":1,"t":"복"},{"r":2,"rs":1,"c":14,"cs":1,"t":"도"},{"r":2,"rs":1,"c":21,"cs":2,"t":"정서안정실\n104-1"},{"r":2,"rs":1,"c":23,"cs":2,"t":"개인상담실1\n104-2"},{"r":2,"rs":1,"c":25,"cs":1,"t":"대기\n공간"},{"r":2,"rs":1,"c":26,"cs":2,"t":"개인상담실2\n104-3"},{"r":2,"rs":1,"c":28,"cs":1,"t":"개인상담실3\n104-4"},{"r":2,"rs":5,"c":29,"cs":4,"t":"상담준비공간\n105\n[Wee센터]"},{"r":2,"rs":5,"c":33,"cs":2,"t":"계단"},{"r":2,"rs":5,"c":35,"cs":8,"t":"율목관\n106"},{"r":3,"rs":4,"c":7,"cs":2,"t":"화장실\n(남)"},{"r":3,"rs":4,"c":9,"cs":2,"t":"화장실\n(여)"},{"r":3,"rs":4,"c":11,"cs":2,"t":"102"},{"r":3,"rs":4,"c":13,"cs":2,"t":"상담\n부스\n102\n[Wee센터]"},{"r":3,"rs":4,"c":15,"cs":4,"t":"회의실\n103"},{"r":3,"rs":4,"c":21,"cs":4,"t":"대기공간\n104\n[Wee센터]"},{"r":5,"rs":2,"c":19,"cs":2,"t":"자동문"},{"r":5,"rs":2,"c":25,"cs":2,"t":"집단\n상담실\n104-5"},{"r":5,"rs":2,"c":27,"cs":2,"t":"심리\n검사실\n104-6"}]};
+
+const FLOOR_NOTE = {
+  "1": "Wee센터 상담 구역 · 율목관 · 서고",
+  "2": "통합 사무실(202) · 각 센터 배치실 · 상담실",
+  "3": "전체 공용공간"
+};
+
+/* ============================================================
+   [3] 저장소 계층
+       실제 운영은 Supabase, 설정 전에는 체험 모드로 동작합니다.
+       화면 코드는 아래 store 의 함수만 부릅니다.
+   ============================================================ */
+const DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
+let store;
+
+if (DEMO) {
+  const DEMO_ROOMS = [
+    { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                  options:["마이크","빔프로젝터"] },
+    { id:"201", label:"강의실 (201)",     floor:2, note:"다문화교육지원센터 배치실. 사용 전 해당 센터와 협의.", options:["빔프로젝터"] },
+    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["빔프로젝터"] },
+    { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 모둠 활동 중심 배치.",          options:[] },
+    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] },
+    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 센터 간 회의용.",                   options:["빔프로젝터"] },
+    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] }
+  ];
+  const DEMO_CENTERS = [
+    { user_id:"wee",     center_id:"wee",     center_name:"Wee센터",           phone:null },
+    { user_id:"clinic",  center_id:"clinic",  center_name:"학습종합클리닉센터", phone:null },
+    { user_id:"jinro",   center_id:"jinro",   center_name:"결대로진로센터",     phone:null },
+    { user_id:"multi",   center_id:"multi",   center_name:"다문화교육지원센터", phone:null },
+    { user_id:"special", center_id:"special", center_name:"특수교육지원센터",   phone:null },
+    { user_id:"admin",   center_id:"admin",   center_name:"교육현안대응팀",     phone:null }
+  ];
+  let seq = 1, rows = [], me = null, onChange = null;
+
+  store = {
+    async login(id, pw) {
+      const c = DEMO_CENTERS.find(x => x.center_id === id);
+      if (!c || pw !== id + "1234") throw new Error("auth");
+      me = c; return c;
+    },
+    async logout() { me = null; },
+    async restore() { return null; },
+    async loadRooms() { return DEMO_ROOMS; },
+    async loadCenters() { return DEMO_CENTERS; },
+    async loadMonth(fromISO, toISO) {
+      return rows.filter(r => r.starts_at >= fromISO && r.starts_at < toISO)
+                 .map(r => JSON.parse(JSON.stringify(r)));
+    },
+    watch(cb) { onChange = cb; return () => { onChange = null; }; },
+    async reserve(row) {
+      const clash = rows.find(r => r.room_id === row.room_id &&
+                                   row.starts_at < r.ends_at && r.starts_at < row.ends_at);
+      if (clash) throw { code: "23P01", clash };
+      rows.push({ ...row, id: seq++, owner: me.user_id,
+                  centers: { center_id: me.center_id, center_name: me.center_name, phone: me.phone } });
+      onChange && onChange();
+    },
+    async cancel(id) {
+      const r = rows.find(x => x.id === id);
+      if (!r || r.owner !== me.user_id) return false;   // 실제로는 DB 가 막습니다
+      rows = rows.filter(x => x.id !== id);
+      onChange && onChange();
+      return true;
+    }
+  };
+} else {
+  const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SELECT = "id, room_id, owner, title, purpose, starts_at, ends_at, attendees, options, centers(center_id, center_name, phone)";
+
+  const myCenter = async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await sb.from("centers").select("*").eq("user_id", user.id).single();
+    if (error || !data) throw new Error("no-center");
+    return data;
+  };
+
+  store = {
+    async login(id, pw) {
+      const { error } = await sb.auth.signInWithPassword({
+        email: id + AUTH_DOMAIN_SUFFIX, password: pw
+      });
+      if (error) throw error;
+      return await myCenter();
+    },
+    async logout() { await sb.auth.signOut(); },
+    async restore() {
+      const { data: { session } } = await sb.auth.getSession();
+      return session ? await myCenter() : null;
+    },
+    async loadRooms() {
+      const { data, error } = await sb.from("rooms").select("*")
+        .eq("active", true).order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+    async loadCenters() {
+      const { data, error } = await sb.from("centers").select("*").order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+    async loadMonth(fromISO, toISO) {
+      const { data, error } = await sb.from("reservations").select(SELECT)
+        .gte("starts_at", fromISO).lt("starts_at", toISO).order("starts_at");
+      if (error) throw error;
+      return data;
+    },
+    // 다른 센터가 예약하면 내 달력이 즉시 갱신됩니다.
+    watch(cb) {
+      const ch = sb.channel("reservations-live")
+        .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, cb)
+        .subscribe();
+      return () => sb.removeChannel(ch);
+    },
+    // owner 는 보내지 않습니다. DB 가 로그인한 계정으로 자동으로 채웁니다.
+    async reserve(row) {
+      const { error } = await sb.from("reservations").insert(row);
+      if (!error) return;
+      if (error.code === "23P01") {          // 겹침 → DB 가 거부
+        const { data } = await sb.from("reservations").select(SELECT)
+          .eq("room_id", row.room_id)
+          .lt("starts_at", row.ends_at).gt("ends_at", row.starts_at).limit(1);
+        throw { code: "23P01", clash: data && data[0] };
+      }
+      throw error;
+    },
+    // 우리 센터가 등록한 것만 지워집니다. 다른 센터 건은 DB 가 거부합니다.
+    async cancel(id) {
+      const { data, error } = await sb.from("reservations").delete().eq("id", id).select("id");
+      if (error) throw error;
+      return data.length > 0;
+    }
+  };
+}
+
+/* ============================================================
+   [4] 공용 유틸 ― 시각은 모두 한국 시간(KST) 기준으로 다룹니다.
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, "0");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const KST = "Asia/Seoul";
+const dfDate = new Intl.DateTimeFormat("sv-SE", { timeZone: KST });
+const dfTime = new Intl.DateTimeFormat("en-GB", { timeZone: KST, hour: "2-digit", minute: "2-digit", hour12: false });
+
+const dOf = ts => dfDate.format(new Date(ts));                 // 2026-08-05
+const toHHMM = min => `${pad(Math.floor(min/60))}:${pad(min%60)}`;
+const isoOf = (date, min) => {                                  // 날짜+분 → 절대 시각
+  const d = new Date(`${date}T00:00:00+09:00`);
+  d.setMinutes(d.getMinutes() + min);
+  return d.toISOString();
+};
+const minOf = ts => { const [h,m] = dfTime.format(new Date(ts)).split(":").map(Number); return h*60+m; };
+const startMin = r => minOf(r.starts_at);
+const endMin   = r => dOf(r.ends_at) !== dOf(r.starts_at) ? minOf(r.ends_at) + 1440 : minOf(r.ends_at);
+const spanOf   = r => `${toHHMM(startMin(r))}~${toHHMM(endMin(r))}`;
+
+const today = new Date();
+const roomOf = id => state.rooms.find(r => r.id === id);
+
+function toast(msg, bad) {
+  const el = document.createElement("div");
+  el.className = "toast" + (bad ? " bad" : "");
+  el.textContent = msg;
+  $("#toastRoot").appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+/* ============================================================
+   [5] 상태
+   ============================================================ */
+const state = {
+  me: null, rooms: [], centers: [],
+  roomId: null,
+  y: today.getFullYear(), m: today.getMonth() + 1,
+  onlyMine: false, rows: [], unwatch: null
+};
+
+/* ============================================================
+   [6] 로그인
+   ============================================================ */
+async function doLogin() {
+  const id = $("#lid").value.trim().toLowerCase();
+  const pw = $("#lpw").value;
+  $("#lmsg").textContent = "";
+  if (!id || !pw) { $("#lmsg").textContent = "아이디와 비밀번호를 입력하세요."; return; }
+  $("#btnLogin").disabled = true;
+  try {
+    const me = await store.login(id, pw);
+    await enter(me);
+  } catch (e) {
+    $("#lmsg").textContent = e && e.message === "no-center"
+      ? "이 계정에 센터가 연결돼 있지 않습니다. 관리자에게 문의하세요."
+      : "아이디 또는 비밀번호가 맞지 않습니다.";
+    console.error(e);
+  } finally {
+    $("#btnLogin").disabled = false;
+  }
+}
+$("#btnLogin").onclick = doLogin;
+$("#lpw").onkeydown = e => { if (e.key === "Enter") doLogin(); };
+$("#lid").onkeydown = e => { if (e.key === "Enter") $("#lpw").focus(); };
+
+async function enter(me) {
+  state.me = me;
+  [state.rooms, state.centers] = await Promise.all([store.loadRooms(), store.loadCenters()]);
+  if (!state.rooms.length) { alert("등록된 공유설비가 없습니다. rooms 표를 확인하세요."); return; }
+  state.roomId = state.rooms[0].id;
+  $("#loginView").style.display = "none";
+  $("#app").style.display = "block";
+  if (DEMO) $("#demoBar").style.display = "block";
+  $("#whoCenter").textContent = me.center_name;
+  initUI();
+  state.unwatch = store.watch(() => reload());
+  await reload();
+}
+
+$("#btnLogout").onclick = async () => {
+  if (state.unwatch) state.unwatch();
+  await store.logout();
+  location.reload();
+};
+
+// 이미 로그인해 둔 세션이 있으면 바로 들어갑니다.
+try { const me = await store.restore(); if (me) await enter(me); } catch (e) { console.warn(e); }
+
+/* ============================================================
+   [7] 화면 구성
+   ============================================================ */
+function initUI() {
+  $("#roomList").innerHTML = state.rooms.map(r =>
+    `<li data-id="${esc(r.id)}"${r.id===state.roomId?' class="on"':""}>${esc(r.label)}<small>${r.floor}층</small></li>`
+  ).join("");
+  $("#roomList").onclick = e => {
+    const li = e.target.closest("li"); if (!li) return;
+    pickRoom(li.dataset.id);
+  };
+
+  const ys = [];
+  for (let y = today.getFullYear(); y <= today.getFullYear()+2; y++)
+    ys.push(`<option value="${y}"${y===state.y?" selected":""}>${y}년</option>`);
+  $("#selY").innerHTML = ys.join("");
+  $("#selM").innerHTML = Array.from({length:12}, (_,i) =>
+    `<option value="${i+1}"${i+1===state.m?" selected":""}>${i+1}월</option>`).join("");
+
+  $("#selY").onchange = e => { state.y = +e.target.value; reload(); };
+  $("#selM").onchange = e => { state.m = +e.target.value; reload(); };
+  $("#prevM").onclick = () => shift(-1);
+  $("#nextM").onclick = () => shift(1);
+  $("#prevY").onclick = () => shift(-12);
+  $("#nextY").onclick = () => shift(12);
+  $("#onlyMine").onchange = e => { state.onlyMine = e.target.checked; renderCal(); };
+  $("#btnNew").onclick = () => openForm(dOf(today));
+  $("#btnMine").onclick = openMine;
+  $("#btnPlan").onclick = openPlan;
+  $("#btnPlan2").onclick = openPlan;
+  $("#btnList").onclick = openList;
+  renderRoomInfo();
+}
+
+function pickRoom(id) {
+  state.roomId = id;
+  [...$("#roomList").children].forEach(c => c.classList.toggle("on", c.dataset.id === id));
+  renderRoomInfo(); renderCal();
+}
+
+function shift(delta) {
+  const d = new Date(state.y, state.m - 1 + delta, 1);
+  state.y = d.getFullYear(); state.m = d.getMonth() + 1;
+  $("#selY").value = state.y; $("#selM").value = state.m;
+  reload();
+}
+
+function renderRoomInfo() {
+  const r = roomOf(state.roomId);
+  $("#calRoom").textContent = r.label;
+  $("#roomInfo").innerHTML = `
+    <div class="info-tag"><b>${esc(r.label)}</b> · 인천고 신관동 ${r.floor}층</div>
+    ${esc(r.note || "")}<br><br>
+    <b>부대시설</b>: ${r.options.length ? esc(r.options.join(", ")) : "없음"}<br>
+    <b>예약방식</b>: 승인 절차 없이 먼저 신청한 센터가 사용합니다.<br>
+    <b>취소</b>: 신청한 센터 계정에서만 가능합니다.<br><br>
+    <span class="hint">담당: 초등교육과 기초학력·인성교육팀</span>`;
+}
+
+/* ============================================================
+   [8] 데이터 읽기
+   ============================================================ */
+async function reload() {
+  const from = isoOf(`${state.y}-${pad(state.m)}-01`, 0);
+  const nx = new Date(state.y, state.m, 1);
+  const to = isoOf(`${nx.getFullYear()}-${pad(nx.getMonth()+1)}-01`, 0);
+  try {
+    state.rows = await store.loadMonth(from, to);
+  } catch (e) {
+    console.error(e);
+    toast("예약 내역을 불러오지 못했습니다. 네트워크를 확인해 주세요.", true);
+    return;
+  }
+  renderCal();
+  if ($("#mineBody")) fillMine();
+  if ($("#listBody")) fillList();
+}
+
+const rowsOf = (roomId, date) =>
+  state.rows.filter(r => r.room_id === roomId && dOf(r.starts_at) === date)
+            .sort((a,b) => startMin(a) - startMin(b));
+const isMine = r => r.centers.center_id === state.me.center_id;
+
+/* ============================================================
+   [9] 달력
+   ============================================================ */
+function renderCal() {
+  const first = new Date(state.y, state.m - 1, 1);
+  const last  = new Date(state.y, state.m, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < first.getDay(); i++) cells.push(null);
+  for (let d = 1; d <= last; d++) cells.push(d);
+  while (cells.length % 7) cells.push(null);
+
+  const tStr = dOf(today);
+  let html = "";
+  for (let w = 0; w < cells.length / 7; w++) {
+    html += "<tr>";
+    for (let i = 0; i < 7; i++) {
+      const d = cells[w*7+i];
+      if (!d) { html += '<td class="pad"></td>'; continue; }
+      const date = `${state.y}-${pad(state.m)}-${pad(d)}`;
+      const dcls = i === 0 ? "sun" : i === 6 ? "sat" : "";
+      let list = rowsOf(state.roomId, date);
+      if (state.onlyMine) list = list.filter(isMine);
+      html += `<td class="clickable${date===tStr?" today":""}" data-date="${date}">
+        <div class="daynum ${dcls}">${pad(d)}</div>
+        ${list.map(r => `<div class="bk${isMine(r)?" mine":""}" data-id="${r.id}">
+            <span class="t">(${spanOf(r)})</span> ${esc(r.centers.center_name)}
+          </div>`).join("")}
+      </td>`;
+    }
+    html += "</tr>";
+  }
+  $("#calBody").innerHTML = html;
+
+  $("#calBody").onclick = e => {
+    const bk = e.target.closest(".bk");
+    if (bk) { e.stopPropagation(); openDetail(+bk.dataset.id); return; }
+    const td = e.target.closest("td.clickable");
+    if (td) openForm(td.dataset.date);
+  };
+}
+
+/* ============================================================
+   [10] 모달 공통
+   ============================================================ */
+function modal(title, bodyHTML, width) {
+  $("#modalRoot").innerHTML = `
+    <div class="dim">
+      <div class="modal"${width?` style="max-width:${width}px"`:""}>
+        <div class="modal-h">${esc(title)}<div class="spacer"></div><button class="x">닫기 ✕</button></div>
+        <div class="modal-b">${bodyHTML}</div>
+      </div>
+    </div>`;
+  const close = () => { $("#modalRoot").innerHTML = ""; document.onkeydown = null; };
+  $("#modalRoot .x").onclick = close;
+  $("#modalRoot .dim").onclick = e => { if (e.target.classList.contains("dim")) close(); };
+  document.onkeydown = e => { if (e.key === "Escape") close(); };
+  return close;
+}
+
+const timeOptions = sel => {
+  let o = "";
+  for (let m = 0; m <= 1440; m += 30)
+    o += `<option value="${m}"${sel===m?" selected":""}>${toHHMM(m)}</option>`;
+  return o;
+};
+
+/* ============================================================
+   [11] 예약신청
+   ============================================================ */
+function openForm(date) {
+  const close = modal("공유설비 예약신청", `
+    <div id="formErr"></div>
+    <div class="modal-btns">
+      <button class="btn-g" id="btnSave">예약신청</button>
+      <button class="btn-n" id="btnClose">닫기</button>
+    </div>
+    <table class="form">
+      <tr>
+        <th class="req">예약설비</th>
+        <td><select id="fRoom">${state.rooms.map(x=>`<option value="${esc(x.id)}"${x.id===state.roomId?" selected":""}>${esc(x.label)}</option>`).join("")}</select></td>
+        <th class="req">예약자</th>
+        <td><input type="text" value="${esc(state.me.center_name)}${state.me.phone?` (${esc(state.me.phone)})`:""}" readonly></td>
+      </tr>
+      <tr><th class="req">제목</th><td colspan="3"><input type="text" id="fTitle" placeholder="예) 이음지원단 정기 협의회"></td></tr>
+      <tr>
+        <th class="req">예약일시</th>
+        <td colspan="3">
+          <div class="time-row">
+            <input type="date" id="fDate" value="${date}">
+            <select id="fStart">${timeOptions(9*60)}</select> ~
+            <select id="fEnd">${timeOptions(11*60)}</select>
+            <span class="hint">30분 단위</span>
+          </div>
+          <div class="avail" id="fAvail"></div>
+        </td>
+      </tr>
+      <tr><th class="req">내용</th><td colspan="3"><textarea id="fBody" placeholder="사용 목적을 간단히 적어주세요."></textarea></td></tr>
+      <tr>
+        <th>부대시설</th>
+        <td colspan="3" id="fOpt"></td>
+      </tr>
+      <tr>
+        <th class="req">참석인원수</th>
+        <td colspan="3"><input type="number" id="fCount" min="1" placeholder="명" style="max-width:120px"></td>
+      </tr>
+    </table>
+    <div class="warn">
+      <b>개인정보는 적지 마세요.</b>
+      제목·내용에 학생 이름, 학교·학년·반, 연락처를 적지 마십시오.
+      이 시스템은 개인정보를 담지 않도록 만들었습니다. 급한 연락은 센터 대표번호로 합니다.
+    </div>
+    <div class="guide">
+      <b>안내</b>
+      · 승인 절차가 없습니다. 신청 즉시 확정되며, 시간이 겹치지 않으면 먼저 신청한 센터가 사용합니다.<br>
+      · 같은 시간에 다른 센터가 먼저 저장하면 신청이 거절되고 그 내역을 알려드립니다.<br>
+      · 취소는 <b>나의예약</b>에서 우리 센터가 신청한 건만 할 수 있습니다.
+    </div>
+  `, 760);
+
+  $("#btnClose").onclick = close;
+
+  const refresh = () => {
+    const rid = $("#fRoom").value, dt = $("#fDate").value;
+    const rr = roomOf(rid);
+    $("#fOpt").innerHTML = rr.options.length
+      ? rr.options.map(o=>`<label class="chk"><input type="checkbox" value="${esc(o)}"> ${esc(o)}</label>`).join("")
+      : '<span class="hint">이 설비에는 등록된 부대시설이 없습니다.</span>';
+    const list = rowsOf(rid, dt);
+    $("#fAvail").innerHTML = list.length
+      ? `<b>${dt} 이미 예약된 시간</b><br>` + list.map(r =>
+          `· ${spanOf(r)} — ${esc(r.centers.center_name)} (${esc(r.title)})`).join("<br>")
+      : `<b>${dt}</b> 종일 비어 있습니다.`;
+  };
+  $("#fRoom").onchange = refresh;
+  $("#fDate").onchange = refresh;
+  refresh();
+
+  $("#btnSave").onclick = async () => {
+    const rid = $("#fRoom").value, dt = $("#fDate").value;
+    const s = +$("#fStart").value, e2 = +$("#fEnd").value;
+    const title = $("#fTitle").value.trim();
+    const purpose = $("#fBody").value.trim();
+    const count = $("#fCount").value.trim();
+    const err = m => { $("#formErr").innerHTML = `<div class="err">${m}</div>`; };
+
+    if (!dt) return err("예약일자를 선택하세요.");
+    if (!title) return err("제목을 입력하세요.");
+    if (e2 <= s) return err("종료 시각이 시작 시각보다 뒤여야 합니다.");
+    if (!purpose) return err("내용을 입력하세요.");
+    if (!count || +count < 1) return err("참석인원수를 입력하세요.");
+
+    const row = {
+      room_id: rid, title, purpose,
+      starts_at: isoOf(dt, s), ends_at: isoOf(dt, e2),
+      attendees: +count,
+      options: [...document.querySelectorAll("#fOpt input:checked")].map(c => c.value)
+    };
+
+    $("#btnSave").disabled = true;
+    try {
+      await store.reserve(row);
+      close();
+      pickRoom(rid);
+      const d = new Date(dt); state.y = d.getFullYear(); state.m = d.getMonth()+1;
+      $("#selY").value = state.y; $("#selM").value = state.m;
+      await reload();
+      toast("예약이 확정되었습니다.");
+    } catch (ex) {
+      if (ex && ex.code === "23P01") {          // DB 가 겹침을 막은 경우
+        const c = ex.clash;
+        err(c
+          ? `이미 <b>${esc(c.centers.center_name)}</b>가 <b>${spanOf(c)}</b>에 선점했습니다. (${esc(c.title)})<br>다른 시간이나 다른 설비를 선택해 주세요.`
+          : "이미 다른 센터가 선점한 시간입니다. 다른 시간을 선택해 주세요.");
+        await reload(); refresh();
+      } else {
+        err("저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        console.error(ex);
+      }
+    } finally {
+      $("#btnSave").disabled = false;
+    }
+  };
+}
+
+/* ============================================================
+   [12] 예약 상세
+   ============================================================ */
+function openDetail(id) {
+  const r = state.rows.find(x => x.id === id);
+  if (!r) return;
+  const mine = isMine(r);
+  const close = modal("예약 상세", `
+    <div class="modal-btns">
+      ${mine ? '<button class="btn-x" id="btnCancel" style="padding:5px 12px">예약취소</button>' : ""}
+      <button class="btn-n" id="btnClose2">닫기</button>
+    </div>
+    <table class="form">
+      <tr><th>예약설비</th><td>${esc(roomOf(r.room_id).label)}</td>
+          <th>예약센터</th><td>${esc(r.centers.center_name)}</td></tr>
+      <tr><th>제목</th><td colspan="3">${esc(r.title)}</td></tr>
+      <tr><th>예약일시</th><td colspan="3">${esc(dOf(r.starts_at))} ${esc(spanOf(r))}</td></tr>
+      <tr><th>내용</th><td colspan="3" style="white-space:pre-wrap">${esc(r.purpose)}</td></tr>
+      <tr><th>부대시설</th><td>${r.options.length?esc(r.options.join(", ")):"-"}</td>
+          <th>참석인원</th><td>${esc(r.attendees)}명</td></tr>
+      <tr><th>문의처</th><td colspan="3">${esc(r.centers.phone || "-")} (센터 대표번호)</td></tr>
+    </table>
+    ${mine ? "" : '<div class="guide">다른 센터가 신청한 예약입니다. 조정이 필요하면 해당 센터 대표번호로 협의해 주세요.</div>'}
+  `, 640);
+  $("#btnClose2").onclick = close;
+  if (mine) $("#btnCancel").onclick = async () => {
+    if (!confirm("이 예약을 취소할까요? 취소하면 다른 센터가 바로 신청할 수 있습니다.")) return;
+    await doCancel(r.id);
+    close();
+  };
+}
+
+async function doCancel(id) {
+  try {
+    const ok = await store.cancel(id);
+    if (ok) { await reload(); toast("예약을 취소했습니다."); }
+    else toast("우리 센터가 신청한 예약만 취소할 수 있습니다.", true);
+  } catch (e) {
+    console.error(e);
+    toast("취소하지 못했습니다. 잠시 후 다시 시도해 주세요.", true);
+  }
+}
+
+/* ============================================================
+   [13] 나의예약현황
+   ============================================================ */
+function openMine() {
+  modal("나의예약현황", `
+    <div class="modal-btns"><button class="btn-n" id="btnClose3">닫기</button></div>
+    <table class="grid">
+      <thead><tr>
+        <th style="width:110px">예약일자</th><th style="width:110px">예약시간</th>
+        <th style="width:130px">예약설비</th><th>예약제목</th>
+        <th style="width:110px">부대시설</th><th style="width:60px">인원</th><th style="width:70px">취소</th>
+      </tr></thead>
+      <tbody id="mineBody"></tbody>
+    </table>
+    <div class="count" id="mineCount"></div>
+    <div class="guide">화면에 보이는 달(${state.y}년 ${state.m}월)의 우리 센터 예약입니다. 다른 달은 달력에서 월을 옮긴 뒤 다시 열어주세요.</div>
+  `, 840);
+  $("#btnClose3").onclick = () => $("#modalRoot").innerHTML = "";
+  fillMine();
+}
+
+function fillMine() {
+  const rows = state.rows.filter(isMine)
+    .sort((a,b) => a.starts_at.localeCompare(b.starts_at));
+  $("#mineBody").innerHTML = rows.length ? rows.map(r => `
+    <tr>
+      <td>${esc(dOf(r.starts_at))}</td>
+      <td>${esc(spanOf(r))}</td>
+      <td>${esc(roomOf(r.room_id).label)}</td>
+      <td style="text-align:left">${esc(r.title)}</td>
+      <td>${r.options.length?esc(r.options.join(", ")):"-"}</td>
+      <td>${esc(r.attendees)}</td>
+      <td><button class="btn-x" data-c="${r.id}">취소</button></td>
+    </tr>`).join("") : `<tr><td colspan="7"><div class="empty">조회 결과가 없습니다.</div></td></tr>`;
+  $("#mineCount").innerHTML = `총 <b>${rows.length}</b> 건`;
+  $("#mineBody").onclick = async e => {
+    const b = e.target.closest("button[data-c]"); if (!b) return;
+    if (!confirm("이 예약을 취소할까요?")) return;
+    await doCancel(+b.dataset.c);
+  };
+}
+
+/* ============================================================
+   [14] 신관동 배치도
+   ============================================================ */
+function planParse(raw) {
+  const lines = raw.split("\n").map(s => s.trim()).filter(Boolean);
+  const i = lines.findIndex(l => l.startsWith("["));
+  const own = i >= 0 ? lines.slice(i).join("").replace(/[\[\]]/g, "") : "";
+  const head = (i >= 0 ? lines.slice(0, i) : lines).join(" ").replace(/\s+/g, " ");
+  const num = (head.match(/(\d{3}(?:-\d)?)/) || [])[1] || "";
+  let kind = "room";
+  if (/^[복도]$/.test(head)) kind = "corr";
+  else if (head.startsWith("<")) kind = "note";
+  else if (/화장실|계단|자동문/.test(head)) kind = "fac";
+  else if (roomOf(num)) kind = "able";        // rooms 표에 있으면 예약 가능
+  return { head, own, num, kind };
+}
+
+function planFloorHTML(floor) {
+  const cells = FLOORPLAN[floor].map(c => {
+    const p = planParse(c.t);
+    const here = p.kind === "able" && p.num === state.roomId;
+    const tight = c.cs <= 1 && p.kind !== "corr" && p.kind !== "note";
+    const label = tight ? (p.num || p.head.split(" ")[0]) : p.head;
+    const small = tight ? ' style="font-size:9px"' : "";
+    const tip = p.head + (p.own ? ` · ${p.own}` : "") +
+                (p.kind === "able" ? " — 클릭하면 이 설비의 예약 달력으로 이동합니다" : "");
+    return `<div class="pc ${p.kind}${here ? " here" : ""}"
+      style="grid-area:${c.r} / ${c.c} / span ${c.rs} / span ${c.cs}"
+      title="${esc(tip)}"${p.kind === "able" ? ` data-room="${esc(p.num)}"` : ""}>
+      <div${small}>${esc(label)}${p.own && !tight ? `<span class="own">${esc(p.own)}</span>` : ""}</div>
+    </div>`;
+  }).join("");
+  return `<div class="plan-floor">
+    <h4>${floor}층 <span>${esc(FLOOR_NOTE[floor])}</span></h4>
+    <div class="plan">${cells}</div>
+  </div>`;
+}
+
+function openPlan() {
+  const close = modal("인천고 신관동 배치도(안)", `
+    <div class="modal-btns"><button class="btn-n" id="btnClose5">닫기</button></div>
+    <div class="plan-legend">
+      <span><i class="swatch" style="background:#eaf5e4;border-color:#7bbd5b"></i>예약 가능 — 클릭하면 그 설비 달력으로 이동</span>
+      <span><i class="swatch" style="background:#4a9e2f;border-color:#3d8626"></i>지금 보고 있는 설비</span>
+      <span><i class="swatch" style="background:#f7f8fa"></i>예약 대상 아님</span>
+      <span><i class="swatch" style="background:#e7eaee"></i>화장실·계단</span>
+    </div>
+    <div class="plan-scroll">
+      ${planFloorHTML("3")}
+      ${planFloorHTML("2")}
+      ${planFloorHTML("1")}
+    </div>
+    <div class="guide">
+      <b>안내</b>
+      · 원본은 <b>&lt;참고&gt;신관동 전체 배치도</b> 시트입니다. 실 위치·크기를 그대로 옮겼습니다.<br>
+      · 초록색은 <b>rooms 표에 등록된 실</b>입니다. 상담실 등을 rooms 표에 추가하면 여기서도 저절로 초록색이 됩니다.
+    </div>
+  `, 1100);
+  $("#btnClose5").onclick = close;
+  $("#modalRoot .plan-scroll").onclick = e => {
+    const el = e.target.closest("[data-room]"); if (!el) return;
+    pickRoom(el.dataset.room); close();
+    toast(`${roomOf(el.dataset.room).label} 달력으로 이동했습니다.`);
+  };
+}
+
+/* ============================================================
+   [15] 전체 목록
+   ============================================================ */
+function openList() {
+  modal(`${state.y}년 ${state.m}월 전체 예약 목록`, `
+    <div class="modal-btns"><button class="btn-n" id="btnClose4">닫기</button></div>
+    <table class="grid">
+      <thead><tr>
+        <th style="width:110px">예약일자</th><th style="width:110px">예약시간</th>
+        <th style="width:130px">예약설비</th><th>예약제목</th>
+        <th style="width:140px">예약센터</th><th style="width:60px">인원</th>
+      </tr></thead>
+      <tbody id="listBody"></tbody>
+    </table>
+    <div class="count" id="listCount"></div>
+  `, 880);
+  $("#btnClose4").onclick = () => $("#modalRoot").innerHTML = "";
+  fillList();
+}
+
+function fillList() {
+  const rows = [...state.rows].sort((a,b) => a.starts_at.localeCompare(b.starts_at));
+  $("#listBody").innerHTML = rows.length ? rows.map(r => `
+    <tr>
+      <td>${esc(dOf(r.starts_at))}</td>
+      <td>${esc(spanOf(r))}</td>
+      <td>${esc(roomOf(r.room_id).label)}</td>
+      <td style="text-align:left">${esc(r.title)}</td>
+      <td>${esc(r.centers.center_name)}</td>
+      <td>${esc(r.attendees)}</td>
+    </tr>`).join("") : `<tr><td colspan="6"><div class="empty">조회 결과가 없습니다.</div></td></tr>`;
+  $("#listCount").innerHTML = `총 <b>${rows.length}</b> 건`;
+}
+</script>
+</body>
+</html>
