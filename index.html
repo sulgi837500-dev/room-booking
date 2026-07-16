@@ -274,8 +274,8 @@
        Supabase 대시보드 → Project Settings → API 에서 복사합니다.
        anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
    ============================================================ */
-const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co"; 
-const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";  
+const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";  
+const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";
 
 // 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
 const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
@@ -458,7 +458,9 @@ const startMin = r => minOf(r.starts_at);
 const endMin   = r => dOf(r.ends_at) !== dOf(r.starts_at) ? minOf(r.ends_at) + 1440 : minOf(r.ends_at);
 const spanOf   = r => `${toHHMM(startMin(r))}~${toHHMM(endMin(r))}`;
 
-const today = new Date();
+// 브라우저를 며칠씩 켜두는 경우가 있어, 자료를 새로 읽을 때마다 오늘 날짜도 다시 읽습니다.
+// (이걸 고정해 두면 자정을 넘긴 다음날 아침에 어제 예약이 '오늘'로 보입니다)
+let today = new Date();
 const roomOf = id => state.rooms.find(r => r.id === id);
 
 function toast(msg, bad) {
@@ -593,6 +595,7 @@ function renderRoomInfo() {
    [8] 데이터 읽기
    ============================================================ */
 async function reload() {
+  today = new Date();                       // 날짜가 바뀌었을 수 있으므로 다시 읽습니다
   const from = isoOf(`${state.y}-${pad(state.m)}-01`, 0);
   const nx = new Date(state.y, state.m, 1);
   const to = isoOf(`${nx.getFullYear()}-${pad(nx.getMonth()+1)}-01`, 0);
@@ -625,8 +628,7 @@ async function loadToday() {
 }
 
 function renderToday() {
-  const d = new Date();
-  $("#todayDate").textContent = `${d.getMonth()+1}월 ${d.getDate()}일`;
+  $("#todayDate").textContent = `${today.getMonth()+1}월 ${today.getDate()}일`;
   const list = [...state.todayRows].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   $("#todayBody").innerHTML = list.length
     ? list.map(r => {
@@ -1112,3 +1114,4 @@ function fillList() {
 </script>
 </body>
 </html>
+
