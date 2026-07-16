@@ -40,14 +40,10 @@
   .who { font-size: 11px; color: #555; }
   .who b { color: #1a5490; }
   .btn-out { border: 1px solid #c5cdd8; background: #fff; padding: 3px 9px; font-size: 11px; color: #555; }
-  .gnb { height: 34px; background: #2b3a52; display: flex; align-items: stretch; padding-left: 12px; }
-  .gnb div { padding: 0 18px; color: #c5d0e0; font-size: 12px; display: flex; align-items: center; }
-  .gnb div.on { background: #111d2e; color: #fff; font-weight: bold; }
 
   /* ===== 페이지 타이틀 ===== */
   .ptitle { height: 40px; display: flex; align-items: center; padding: 0 14px; border-bottom: 1px solid #dde3ea; gap: 8px; }
   .ptitle h2 { font-size: 15px; color: #222; letter-spacing: -.5px; }
-  .ptitle .crumb { font-size: 11px; color: #8b96a5; }
   .ptitle .spacer { flex: 1; }
   .btn-g { background: #4a9e2f; color: #fff; border: none; padding: 5px 12px; font-size: 11px; font-weight: bold; }
   .btn-g:hover { background: #3d8626; }
@@ -180,7 +176,8 @@
       <button class="btn-login" id="btnLogin">로그인</button>
     </div>
     <div class="login-foot">
-      센터별 공용 계정으로 로그인합니다.<br>     
+      센터별 공용 계정으로 로그인합니다.<br>
+      계정 문의: 초등교육과 기초학력·인성교육팀
     </div>
   </div>
 </div>
@@ -194,12 +191,13 @@
     <div class="logo">학생맞춤<span>통합지원센터</span></div>
     <div class="spacer"></div>
     <div class="who"><b id="whoCenter"></b></div>
+    <button class="btn-out" id="btnPw">비밀번호 변경</button>
+    <button class="btn-out" id="btnReset" style="display:none">비밀번호 초기화</button>
     <button class="btn-out" id="btnLogout">로그아웃</button>
-  </div> 
+  </div>
 
   <div class="ptitle">
     <h2>공유설비예약</h2>
-    <span class="crumb">＞ 업무지원 ＞ 공유설비예약</span>
     <div class="spacer"></div>
     <button class="btn-g" id="btnNew">예약신청</button>
     <button class="btn-g" id="btnMine">나의예약</button>
@@ -260,8 +258,8 @@
        Supabase 대시보드 → Project Settings → API 에서 복사합니다.
        anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
    ============================================================ */
-const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";  
-const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";  
+const SUPABASE_URL      = "";   // 예: https://abcdefgh.supabase.co
+const SUPABASE_ANON_KEY = "";   // 예: eyJhbGciOi...
 
 // 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
 const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
@@ -290,12 +288,12 @@ let store;
 if (DEMO) {
   const DEMO_ROOMS = [
     { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                  options:["마이크","빔프로젝터"] },
-    { id:"201", label:"강의실 (201)",     floor:2, note:"다문화교육지원센터 배치실.", options:["빔프로젝터"] },
-    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실.",     options:["빔프로젝터"] },
+    { id:"201", label:"강의실 (201)",     floor:2, note:"다문화교육지원센터 배치실. 사용 전 해당 센터와 협의.", options:["빔프로젝터"] },
+    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["빔프로젝터"] },
     { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 모둠 활동 중심 배치.",          options:[] },
-    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간.",         options:["마이크","빔프로젝터"] },
-    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간.",                   options:["빔프로젝터"] },
-    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간.",         options:["마이크","빔프로젝터"] }
+    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] },
+    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 센터 간 회의용.",                   options:["빔프로젝터"] },
+    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] }
   ];
   const DEMO_CENTERS = [
     { user_id:"wee",     center_id:"wee",     center_name:"Wee센터",           phone:null },
@@ -336,7 +334,9 @@ if (DEMO) {
       rows = rows.filter(x => x.id !== id);
       onChange && onChange();
       return true;
-    }
+    },
+    async changePassword() { throw new Error("체험 모드에서는 비밀번호를 바꿀 수 없습니다."); },
+    async resetCenterPassword() { throw new Error("체험 모드에서는 초기화할 수 없습니다."); }
   };
 } else {
   const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
@@ -405,6 +405,17 @@ if (DEMO) {
       const { data, error } = await sb.from("reservations").delete().eq("id", id).select("id");
       if (error) throw error;
       return data.length > 0;
+    },
+    // 지금 로그인한 계정의 비밀번호를 바꿉니다.
+    async changePassword(newPw) {
+      const { error } = await sb.auth.updateUser({ password: newPw });
+      if (error) throw error;
+    },
+    // admin 계정만 부를 수 있습니다. 검사는 DB 함수 안에서 합니다.
+    async resetCenterPassword(centerId) {
+      const { data, error } = await sb.rpc("reset_center_password", { target_center: centerId });
+      if (error) throw error;
+      return data;
     }
   };
 }
@@ -486,6 +497,7 @@ async function enter(me) {
   $("#app").style.display = "block";
   if (DEMO) $("#demoBar").style.display = "block";
   $("#whoCenter").textContent = me.center_name;
+  if (me.center_id === "admin") $("#btnReset").style.display = "";
   initUI();
   state.unwatch = store.watch(() => reload());
   await reload();
@@ -531,6 +543,8 @@ function initUI() {
   $("#btnPlan").onclick = openPlan;
   $("#btnPlan2").onclick = openPlan;
   $("#btnList").onclick = openList;
+  $("#btnPw").onclick = openPw;
+  $("#btnReset").onclick = openReset;
   renderRoomInfo();
 }
 
@@ -555,8 +569,7 @@ function renderRoomInfo() {
     ${esc(r.note || "")}<br><br>
     <b>부대시설</b>: ${r.options.length ? esc(r.options.join(", ")) : "없음"}<br>
     <b>예약방식</b>: 승인 절차 없이 먼저 신청한 센터가 사용합니다.<br>
-    <b>취소</b>: 신청한 센터 계정에서만 가능합니다.<br><br>
-    <span class="hint"></span>`;
+    <b>취소</b>: 신청한 센터 계정에서만 가능합니다.`;
 }
 
 /* ============================================================
@@ -569,8 +582,10 @@ async function reload() {
   try {
     state.rows = await store.loadMonth(from, to);
   } catch (e) {
-    console.error(e);
-    toast("예약 내역을 불러오지 못했습니다. 네트워크를 확인해 주세요.", true);
+    console.error("예약 조회 실패:", e);
+    state.rows = [];
+    renderCal();                       // 오류가 나도 날짜는 보이게
+    toast("예약 조회 실패: " + (e.code || "") + " " + (e.message || e.hint || ""), true);
     return;
   }
   renderCal();
@@ -692,7 +707,7 @@ function openForm(date) {
     <div class="warn">
       <b>개인정보는 적지 마세요.</b>
       제목·내용에 학생 이름, 학교·학년·반, 연락처를 적지 마십시오.
-      이 시스템은 개인정보를 담지 않도록 만들었습니다. 연락처는 유선번호로 합니다.
+      이 시스템은 개인정보를 담지 않도록 만들었습니다. 급한 연락은 센터 대표번호로 합니다.
     </div>
     <div class="guide">
       <b>안내</b>
@@ -853,7 +868,99 @@ function fillMine() {
 }
 
 /* ============================================================
-   [14] 신관동 배치도
+   [14] 비밀번호 변경 (모든 센터)
+   ============================================================ */
+function openPw() {
+  const close = modal("비밀번호 변경", `
+    <div id="pwErr"></div>
+    <div class="modal-btns">
+      <button class="btn-g" id="btnPwSave">변경</button>
+      <button class="btn-n" id="btnPwClose">닫기</button>
+    </div>
+    <table class="form">
+      <tr><th>계정</th><td>${esc(state.me.center_id)} · ${esc(state.me.center_name)}</td></tr>
+      <tr><th class="req">새 비밀번호</th><td><input type="password" id="pw1" autocomplete="new-password"></td></tr>
+      <tr><th class="req">새 비밀번호 확인</th><td><input type="password" id="pw2" autocomplete="new-password"></td></tr>
+    </table>
+    <div class="guide">
+      <b>안내</b>
+      · 8자 이상으로 정해주세요.<br>
+      · 센터 공용 계정입니다. 바꾸면 <b>우리 센터 담당자 모두에게</b> 새 비밀번호를 알려주세요.<br>
+      · 잊어버렸다면 admin 계정(교육현안대응팀)에 초기화를 요청하세요.
+    </div>
+  `, 520);
+  $("#btnPwClose").onclick = close;
+  $("#btnPwSave").onclick = async () => {
+    const a = $("#pw1").value, b = $("#pw2").value;
+    const err = m => { $("#pwErr").innerHTML = `<div class="err">${m}</div>`; };
+    if (a.length < 8) return err("8자 이상으로 정해주세요.");
+    if (a !== b) return err("두 비밀번호가 서로 다릅니다.");
+    $("#btnPwSave").disabled = true;
+    try {
+      await store.changePassword(a);
+      close();
+      toast("비밀번호를 바꿨습니다.");
+    } catch (e) {
+      err("바꾸지 못했습니다: " + (e.message || ""));
+      console.error(e);
+    } finally {
+      $("#btnPwSave").disabled = false;
+    }
+  };
+}
+
+/* ============================================================
+   [15] 비밀번호 초기화 (admin 계정 전용)
+        실제 권한 검사는 화면이 아니라 DB 함수 안에서 합니다.
+   ============================================================ */
+function openReset() {
+  const others = state.centers.filter(c => c.center_id !== "admin");
+  const close = modal("센터 비밀번호 초기화 (admin 전용)", `
+    <div id="rsErr"></div>
+    <div class="modal-btns">
+      <button class="btn-g" id="btnRsGo">초기화</button>
+      <button class="btn-n" id="btnRsClose">닫기</button>
+    </div>
+    <table class="form">
+      <tr><th class="req">초기화할 센터</th>
+          <td><select id="rsCenter">${others.map(c =>
+            `<option value="${esc(c.center_id)}">${esc(c.center_id)} · ${esc(c.center_name)}</option>`).join("")}</select></td></tr>
+    </table>
+    <div id="rsOut"></div>
+    <div class="guide">
+      <b>안내</b>
+      · 임시 비밀번호를 새로 만들어 화면에 보여줍니다. 그 자리에서 해당 센터에 알려주세요.<br>
+      · <b>이 창을 닫으면 다시 볼 수 없습니다.</b> 다시 초기화하면 또 다른 번호가 나옵니다.<br>
+      · 해당 센터는 로그인한 뒤 <b>비밀번호 변경</b>으로 스스로 바꾸면 됩니다.<br>
+      · admin 계정 자신은 여기서 못 바꿉니다. Supabase SQL Editor 를 이용하세요.
+    </div>
+  `, 560);
+  $("#btnRsClose").onclick = close;
+  $("#btnRsGo").onclick = async () => {
+    const cid = $("#rsCenter").value;
+    const name = (state.centers.find(c => c.center_id === cid) || {}).center_name || cid;
+    if (!confirm(`${name}의 비밀번호를 초기화할까요?\n지금 쓰던 비밀번호는 즉시 못 쓰게 됩니다.`)) return;
+    $("#btnRsGo").disabled = true;
+    try {
+      const pw = await store.resetCenterPassword(cid);
+      $("#rsErr").innerHTML = "";
+      $("#rsOut").innerHTML = `
+        <div class="info-tag" style="margin-top:10px;padding:12px;text-align:center">
+          <b>${esc(name)}</b> 임시 비밀번호<br>
+          <span style="font-size:22px;font-weight:bold;letter-spacing:2px;color:#2f6b18">${esc(pw)}</span><br>
+          <span style="font-size:11px">아이디는 <b>${esc(cid)}</b> 그대로입니다. 이 창을 닫으면 다시 볼 수 없습니다.</span>
+        </div>`;
+    } catch (e) {
+      $("#rsErr").innerHTML = `<div class="err">${esc(e.message || "초기화하지 못했습니다.")}</div>`;
+      console.error(e);
+    } finally {
+      $("#btnRsGo").disabled = false;
+    }
+  };
+}
+
+/* ============================================================
+   [16] 신관동 배치도
    ============================================================ */
 function planParse(raw) {
   const lines = raw.split("\n").map(s => s.trim()).filter(Boolean);
@@ -919,7 +1026,7 @@ function openPlan() {
 }
 
 /* ============================================================
-   [15] 전체 목록
+   [17] 전체 목록
    ============================================================ */
 function openList() {
   modal(`${state.y}년 ${state.m}월 전체 예약 목록`, `
