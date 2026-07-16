@@ -524,8 +524,9 @@ function initUI() {
     pickRoom(li.dataset.id);
   };
 
+  // 지난 기록 조회를 위해 과거 2년, 미리 잡아두기 위해 앞으로 20년
   const ys = [];
-  for (let y = today.getFullYear(); y <= today.getFullYear()+2; y++)
+  for (let y = today.getFullYear()-2; y <= today.getFullYear()+20; y++)
     ys.push(`<option value="${y}"${y===state.y?" selected":""}>${y}년</option>`);
   $("#selY").innerHTML = ys.join("");
   $("#selM").innerHTML = Array.from({length:12}, (_,i) =>
