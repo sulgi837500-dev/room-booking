@@ -180,8 +180,7 @@
       <button class="btn-login" id="btnLogin">로그인</button>
     </div>
     <div class="login-foot">
-      센터별 공용 계정으로 로그인합니다.<br>
-      계정 문의: 초등교육과 기초학력·인성교육팀
+      센터별 공용 계정으로 로그인합니다.<br>     
     </div>
   </div>
 </div>
@@ -196,12 +195,7 @@
     <div class="spacer"></div>
     <div class="who"><b id="whoCenter"></b></div>
     <button class="btn-out" id="btnLogout">로그아웃</button>
-  </div>
-
-  <div class="gnb">
-    <div>일정관리</div><div>문서관리</div><div>메모관리</div>
-    <div class="on">업무지원</div><div>자료집계</div>
-  </div>
+  </div> 
 
   <div class="ptitle">
     <h2>공유설비예약</h2>
@@ -296,12 +290,12 @@ let store;
 if (DEMO) {
   const DEMO_ROOMS = [
     { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                  options:["마이크","빔프로젝터"] },
-    { id:"201", label:"강의실 (201)",     floor:2, note:"다문화교육지원센터 배치실. 사용 전 해당 센터와 협의.", options:["빔프로젝터"] },
-    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["빔프로젝터"] },
+    { id:"201", label:"강의실 (201)",     floor:2, note:"다문화교육지원센터 배치실.", options:["빔프로젝터"] },
+    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실.",     options:["빔프로젝터"] },
     { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 모둠 활동 중심 배치.",          options:[] },
-    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] },
-    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 센터 간 회의용.",                   options:["빔프로젝터"] },
-    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] }
+    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간.",         options:["마이크","빔프로젝터"] },
+    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간.",                   options:["빔프로젝터"] },
+    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간.",         options:["마이크","빔프로젝터"] }
   ];
   const DEMO_CENTERS = [
     { user_id:"wee",     center_id:"wee",     center_name:"Wee센터",           phone:null },
