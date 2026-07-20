@@ -169,6 +169,72 @@
     .wrap { flex-direction: column; }
     .side { width: 100%; }
   }
+
+  /* ===== 요일 헤더: 넓으면 '일요일', 좁으면 '일' ===== */
+  .dow-short { display: none; }
+
+  /* =====================================================================
+     모바일 전용 (600px 이하). PC 화면에는 영향을 주지 않습니다.
+     달력이 좁은 화면에서 글자가 잘리는 문제를 바로잡습니다.
+     ===================================================================== */
+  @media (max-width: 600px) {
+    body { font-size: 13px; }              /* 폰에서 글자 조금 키움 */
+
+    /* 상단 버튼이 한 줄에 안 들어가면 자연스럽게 줄바꿈 */
+    .ptitle { height: auto; flex-wrap: wrap; padding: 8px 10px; gap: 6px; }
+    .ptitle h2 { width: 100%; }
+    .ptitle .spacer { display: none; }
+    .ptitle button { flex: 1; padding: 8px 6px; font-size: 12px; }
+
+    .topbar { padding: 0 8px; gap: 6px; }
+    .topbar .btn-out { padding: 4px 6px; }
+    .wrap { padding: 8px; gap: 8px; }
+
+    /* 달력 상단(연/월 이동) 줄바꿈 허용 */
+    .cal-head { flex-wrap: wrap; }
+    .cal-head .room-name { width: 100%; margin-bottom: 3px; }
+    .mine-check { font-size: 12px; }
+
+    /* 요일: 한 글자로 */
+    .dow-full { display: none; }
+    .dow-short { display: inline; }
+    table.cal th { font-size: 12px; padding: 5px 0; }
+
+    /* 날짜 칸: 높이를 키우고, 예약이 세로로 쌓이며 안 잘리게 */
+    table.cal td { height: auto; min-height: 46px; padding: 2px; }
+    .daynum { font-size: 13px; }
+
+    /* 예약 칸: 한 줄 자르기(...) 대신 두 줄까지 접어서 다 보이게 */
+    .bk {
+      font-size: 11px; white-space: normal; line-height: 1.3;
+      padding: 3px 4px; margin-top: 3px;
+    }
+    .bk .t { display: block; }             /* 시간과 센터명을 위아래로 */
+
+    /* 오늘의 예약 목록도 폰에서 조금 크게 */
+    .today-row { padding: 8px; }
+    .today-body { max-height: none; }
+
+    /* 팝업(예약신청 등)이 화면 밖으로 나가지 않게 */
+    .dim { padding: 12px 8px; align-items: flex-start; }
+    .modal { max-width: 100% !important; }
+    .modal-b { padding: 10px; }
+
+    /* 신청 폼: 라벨과 입력칸을 위아래로 쌓아 좁은 화면에서도 안 눌림 */
+    table.form, table.form tbody, table.form tr, table.form th, table.form td {
+      display: block; width: 100% !important;
+    }
+    table.form th { border-bottom: none; padding: 6px 8px 3px; }
+    table.form td { border-top: none; padding: 3px 8px 8px; }
+    .time-row { gap: 6px; }
+    .time-row select, .time-row input[type=date] { flex: 1; min-width: 0; }
+
+    /* 목록/나의예약 표: 옆으로 스크롤되게 (칸이 안 뭉개지도록) */
+    table.grid { display: block; overflow-x: auto; white-space: nowrap; }
+
+    /* 배치도: 폰에서는 손가락으로 밀어서 보기 */
+    .plan-floor { min-width: 720px; }
+  }
 </style>
 </head>
 <body>
@@ -189,6 +255,7 @@
     </div>
     <div class="login-foot">
       센터별 공용 계정으로 로그인합니다.<br>
+      
     </div>
   </div>
 </div>
@@ -250,8 +317,13 @@
       </div>
       <table class="cal">
         <thead><tr>
-          <th style="width:14.28%">일요일</th><th>월요일</th><th>화요일</th><th>수요일</th>
-          <th>목요일</th><th>금요일</th><th>토요일</th>
+          <th style="width:14.28%"><span class="dow-full">일요일</span><span class="dow-short">일</span></th>
+          <th><span class="dow-full">월요일</span><span class="dow-short">월</span></th>
+          <th><span class="dow-full">화요일</span><span class="dow-short">화</span></th>
+          <th><span class="dow-full">수요일</span><span class="dow-short">수</span></th>
+          <th><span class="dow-full">목요일</span><span class="dow-short">목</span></th>
+          <th><span class="dow-full">금요일</span><span class="dow-short">금</span></th>
+          <th><span class="dow-full">토요일</span><span class="dow-short">토</span></th>
         </tr></thead>
         <tbody id="calBody"></tbody>
       </table>
@@ -273,9 +345,9 @@
        Supabase 대시보드 → Project Settings → API 에서 복사합니다.
        anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
    ============================================================ */
-const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";  
-const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";
-
+const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co"; 
+const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP"; 
+ 
 // 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
 const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
 
@@ -808,15 +880,17 @@ function openForm(date) {
       options: [...document.querySelectorAll("#fOpt input:checked")].map(c => c.value)
     };
 
-    $("#btnSave").disabled = true;
+    const saveBtn = $("#btnSave");
+    saveBtn.disabled = true;
     try {
       await store.reserve(row);
-      close();
+      close();                                 // 성공 → 창을 닫습니다(버튼도 함께 사라짐)
       pickRoom(rid);
       const d = new Date(dt); state.y = d.getFullYear(); state.m = d.getMonth()+1;
       $("#selY").value = state.y; $("#selM").value = state.m;
       await reload();
       toast("예약이 확정되었습니다.");
+      return;                                  // 창이 닫혔으므로 버튼 복구는 건너뜁니다
     } catch (ex) {
       if (ex && ex.code === "23P01") {          // DB 가 겹침을 막은 경우
         const c = ex.clash;
@@ -828,9 +902,9 @@ function openForm(date) {
         err("저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
         console.error(ex);
       }
-    } finally {
-      $("#btnSave").disabled = false;
     }
+    // 실패한 경우에만 여기 도달합니다. 창이 아직 열려 있으니 버튼을 되살립니다.
+    if (saveBtn.isConnected) saveBtn.disabled = false;
   };
 }
 
@@ -1113,4 +1187,3 @@ function fillList() {
 </script>
 </body>
 </html>
-
