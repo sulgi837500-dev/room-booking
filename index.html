@@ -99,6 +99,9 @@
   .daynum.sat { color: #3b6ea5; }
   td.clickable { cursor: pointer; }
   td.clickable:hover { background: #f2f8fd; }
+  td.locked { background: #f4f5f7; }
+  td.locked .daynum { color: #b7bfc9; }
+  td.locked:hover { background: #eceef1; }
   .bk { margin-top: 2px; padding: 2px 3px; font-size: 10px; line-height: 1.35; border-left: 3px solid #3b6ea5; background: #eef4fa; color: #24445f; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bk:hover { background: #dfeaf6; }
   .bk.mine { border-left-color: #4a9e2f; background: #eef7e9; color: #33641d; }
@@ -169,6 +172,19 @@
     .wrap { flex-direction: column; }
     .side { width: 100%; }
   }
+
+  /* 배치도 팝업만: 좁은 화면에서 화면을 꽉 채우고 좌우로 시원하게 밀리게 함
+     (달력·다른 팝업·글씨에는 영향 없음) */
+  @media (max-width: 760px) {
+    .dim:has(.plan-modal) { padding: 8px; }
+    .plan-modal { max-width: 100% !important; }
+    .plan-modal .plan-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;   /* iOS 관성 스크롤 */
+      margin: 0 -2px;                       /* 좌우 여백을 줄여 표시 폭 확보 */
+    }
+    .plan-modal .plan-floor { min-width: 760px; }  /* 내용 폭 고정 → 확실히 스크롤 생성 */
+  }
 </style>
 </head>
 <body>
@@ -189,6 +205,7 @@
     </div>
     <div class="login-foot">
       센터별 공용 계정으로 로그인합니다.<br>
+      계정 문의: 학습종합클리닉센터 담당자
     </div>
   </div>
 </div>
@@ -273,8 +290,8 @@
        Supabase 대시보드 → Project Settings → API 에서 복사합니다.
        anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
    ============================================================ */
-const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";  
-const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP"; 
+const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";   
+const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";
 
 // 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
 const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
@@ -303,12 +320,12 @@ let store;
 if (DEMO) {
   const DEMO_ROOMS = [
     { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                  options:["마이크","빔프로젝터"] },
-    { id:"201", label:"강의실 (201)",     floor:2, note:"다문화교육지원센터 배치실. ", options:["빔프로젝터"] },
-    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. ",     options:["빔프로젝터"] },
+    { id:"201", label:"강의실 (201)",     floor:2, note:"다문화교육지원센터 배치실. 사용 전 해당 센터와 협의.", options:["빔프로젝터"] },
+    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["빔프로젝터"] },
     { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 모둠 활동 중심 배치.",          options:[] },
-    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간.",         options:["마이크","빔프로젝터"] },
-    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간.",                   options:["빔프로젝터"] },
-    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. ",         options:["마이크","빔프로젝터"] }
+    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] },
+    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 센터 간 회의용.",                   options:["빔프로젝터"] },
+    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] }
   ];
   const DEMO_CENTERS = [
     { user_id:"wee",     center_id:"wee",     center_name:"Wee센터",           phone:null },
@@ -462,6 +479,46 @@ const spanOf   = r => `${toHHMM(startMin(r))}~${toHHMM(endMin(r))}`;
 let today = new Date();
 const roomOf = id => state.rooms.find(r => r.id === id);
 
+/* ============================================================
+   예약 오픈 규칙
+   · 어떤 달의 예약은 "3개월 전 그 달의 마지막 월요일"에 열립니다.
+     예) 2026년 11월 → 8월 마지막 월요일(8/31) 오픈
+   · 아직 오픈 전인 달의 날짜는 예약할 수 없습니다.
+   · 지난 날짜(오늘 이전)도 예약할 수 없습니다.
+   ※ 날짜에서 계산하므로 연도가 바뀌어도 그대로 맞습니다. 표 관리가 필요 없습니다.
+   ============================================================ */
+
+// 어떤 해·달의 "마지막 월요일" (로컬 기준)
+function lastMondayOfMonth(y, mIndex0) {          // mIndex0: 0=1월
+  const d = new Date(y, mIndex0 + 1, 0);          // 그 달의 마지막 날
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));// 가장 가까운 이전(또는 당일) 월요일
+  return d;
+}
+
+// 대상 연·월(1~12)의 예약이 열리는 날짜(자정)
+function openDateFor(year, month1) {
+  let y = year, m0 = (month1 - 1) - 3;            // 3개월 전
+  while (m0 < 0) { m0 += 12; y -= 1; }
+  const d = lastMondayOfMonth(y, m0);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// 'YYYY-MM-DD' 날짜가 지금 예약 가능한지 판정
+function bookingWindow(dateStr) {
+  const [y, m, day] = dateStr.split("-").map(Number);
+  const target = new Date(y, m - 1, day); target.setHours(0, 0, 0, 0);
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);         // 오늘 자정
+
+  if (target < t0) return { ok: false, reason: "past" };  // 지난 날짜
+
+  const open = openDateFor(y, m);
+  if (t0 < open) return { ok: false, reason: "not-open", open };  // 아직 오픈 전
+  return { ok: true };
+}
+
+const fmtDate = d => `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`;
+
 function toast(msg, bad) {
   const el = document.createElement("div");
   el.className = "toast" + (bad ? " bad" : "");
@@ -582,12 +639,20 @@ function shift(delta) {
 function renderRoomInfo() {
   const r = roomOf(state.roomId);
   $("#calRoom").textContent = r.label;
+  // 지금 보고 있는 달이 언제부터 예약 가능한지
+  const openD = openDateFor(state.y, state.m);
+  const t0 = new Date(); t0.setHours(0,0,0,0);
+  const openInfo = t0 < openD
+    ? `<span style="color:#c0392b"><b>${state.y}년 ${state.m}월</b>은 <b>${fmtDate(openD)}</b>부터 예약 가능</span>`
+    : `<span style="color:#3d7a24"><b>${state.y}년 ${state.m}월</b> 예약 열려 있음</span>`;
   $("#roomInfo").innerHTML = `
     <div class="info-tag"><b>${esc(r.label)}</b> · 인천고 신관동 ${r.floor}층</div>
     ${esc(r.note || "")}<br><br>
     <b>부대시설</b>: ${r.options.length ? esc(r.options.join(", ")) : "없음"}<br>
     <b>예약방식</b>: 승인 절차 없이 먼저 신청한 센터가 사용합니다.<br>
-    <b>취소</b>: 신청한 센터 계정에서만 가능합니다.`;
+    <b>취소</b>: 신청한 센터 계정에서만 가능합니다.<br>
+    <b>예약오픈</b>: 이용하려는 달의 <b>3개월 전 마지막 주 월요일</b>에 열립니다.<br>
+    <div style="margin-top:5px;padding:5px 7px;background:#f7f9fb;border:1px solid #e3e8ee">${openInfo}</div>`;
 }
 
 /* ============================================================
@@ -670,9 +735,11 @@ function renderCal() {
       if (!d) { html += '<td class="pad"></td>'; continue; }
       const date = `${state.y}-${pad(state.m)}-${pad(d)}`;
       const dcls = i === 0 ? "sun" : i === 6 ? "sat" : "";
+      const win = bookingWindow(date);          // 예약 오픈 여부
       let list = rowsOf(state.roomId, date);
       if (state.onlyMine) list = list.filter(isMine);
-      html += `<td class="clickable${date===tStr?" today":""}" data-date="${date}">
+      const lockCls = win.ok ? "" : " locked";
+      html += `<td class="clickable${date===tStr?" today":""}${lockCls}" data-date="${date}"${win.ok?"":` title="${win.reason==='past'?'지난 날짜':'예약 오픈 전 ('+fmtDate(win.open)+' 오픈)'}"`}>
         <div class="daynum ${dcls}">${pad(d)}</div>
         ${list.map(r => `<div class="bk${isMine(r)?" mine":""}" data-id="${r.id}">
             <span class="t">(${spanOf(r)})</span> ${esc(r.centers.center_name)}
@@ -777,6 +844,16 @@ function openForm(date) {
     $("#fOpt").innerHTML = rr.options.length
       ? rr.options.map(o=>`<label class="chk"><input type="checkbox" value="${esc(o)}"> ${esc(o)}</label>`).join("")
       : '<span class="hint">이 설비에는 등록된 부대시설이 없습니다.</span>';
+
+    // 예약 오픈 여부 먼저 안내
+    const win = dt ? bookingWindow(dt) : { ok: true };
+    if (!win.ok) {
+      const msg = win.reason === "past"
+        ? `<b>${dt}</b> 는 지난 날짜라 예약할 수 없습니다.`
+        : `<b>${dt}</b> 는 아직 예약 오픈 전입니다. 이 날짜는 <b>${fmtDate(win.open)}</b> 부터 예약할 수 있습니다.`;
+      $("#fAvail").innerHTML = `<span style="color:#c0392b">${msg}</span>`;
+      return;
+    }
     const list = rowsOf(rid, dt);
     $("#fAvail").innerHTML = list.length
       ? `<b>${dt} 이미 예약된 시간</b><br>` + list.map(r =>
@@ -796,6 +873,15 @@ function openForm(date) {
     const err = m => { $("#formErr").innerHTML = `<div class="err">${m}</div>`; };
 
     if (!dt) return err("예약일자를 선택하세요.");
+
+    // 예약 오픈 규칙 검사 (지난 날짜·오픈 전 날짜 차단)
+    const win = bookingWindow(dt);
+    if (!win.ok) {
+      return err(win.reason === "past"
+        ? "지난 날짜는 예약할 수 없습니다."
+        : `이 날짜는 아직 예약 오픈 전입니다. <b>${fmtDate(win.open)}</b> 부터 예약할 수 있습니다.<br>(예약은 이용하려는 달의 3개월 전 마지막 주 월요일에 열립니다.)`);
+    }
+
     if (!title) return err("제목을 입력하세요.");
     if (e2 <= s) return err("종료 시각이 시작 시각보다 뒤여야 합니다.");
     if (!purpose) return err("내용을 입력하세요.");
@@ -1071,6 +1157,7 @@ function openPlan() {
       · 초록색은 <b>rooms 표에 등록된 실</b>입니다. 상담실 등을 rooms 표에 추가하면 여기서도 저절로 초록색이 됩니다.
     </div>
   `, 1100);
+  $("#modalRoot .modal").classList.add("plan-modal");   // 배치도 팝업만 모바일에서 넓게
   $("#btnClose5").onclick = close;
   $("#modalRoot .plan-scroll").onclick = e => {
     const el = e.target.closest("[data-room]"); if (!el) return;
