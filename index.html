@@ -204,15 +204,13 @@
       <button class="btn-login" id="btnLogin">로그인</button>
     </div>
     <div class="login-foot">
-      센터별 공용 계정으로 로그인합니다.<br>
-      계정 문의: 학습종합클리닉센터 담당자
+      센터별 공용 계정으로 로그인합니다.<br> 
     </div>
   </div>
 </div>
 
 <div id="app" style="display:none">
   <div class="demo-bar" id="demoBar" style="display:none">
-    체험 모드입니다. Supabase 설정을 넣기 전까지 예약 내용은 이 브라우저에만 저장되고 새로고침하면 사라집니다.
   </div>
 
   <div class="topbar">
@@ -291,7 +289,7 @@
        anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
    ============================================================ */
 const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";   
-const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";
+const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";   
 
 // 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
 const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
@@ -319,13 +317,19 @@ let store;
 
 if (DEMO) {
   const DEMO_ROOMS = [
-    { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                  options:["마이크","빔프로젝터"] },
-    { id:"201", label:"강의실 (201)",     floor:2, note:"다문화교육지원센터 배치실. 사용 전 해당 센터와 협의.", options:["빔프로젝터"] },
-    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["빔프로젝터"] },
-    { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 모둠 활동 중심 배치.",          options:[] },
-    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] },
-    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 센터 간 회의용.",                   options:["빔프로젝터"] },
-    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["마이크","빔프로젝터"] }
+    { id:"105", label:"상담준비실 (105)", floor:1, note:"Wee센터 배치실. 사용 전 해당 센터와 협의.",           options:["전자칠판"],          capacity:24명 },
+    { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                 options:["마이크","빔프로젝터"], capacity:127명 },
+    { id:"203", label:"스터디카페 (203)", floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["TV거치대"],          capacity:30명 },
+    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["전자칠판"],          capacity:40명 },
+    { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 모둠 활동 중심 배치.",          options:["전자칠판"],          capacity:40명 },
+    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:[],                    capacity:40명 },
+    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 센터 간 회의용.",                   options:[],                    capacity:30명 },
+    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["빔프로젝터"],        capacity:60명 },
+    { id:"304", label:"다목적실 (304)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:30명 },
+    { id:"305", label:"다목적실 (305)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:30명 },
+    { id:"306", label:"다목적실 (306)",   floor:3, note:"학습종합클리닉센터 배치실. 사용 전 해당 센터와 협의.", options:[],                    capacity:12명 },
+    { id:"307", label:"다목적실 (307)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:40명 },
+    { id:"308", label:"다목적실 (308)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:40명 }
   ];
   const DEMO_CENTERS = [
     { user_id:"wee",     center_id:"wee",     center_name:"Wee센터",           phone:null },
@@ -483,9 +487,7 @@ const roomOf = id => state.rooms.find(r => r.id === id);
    예약 오픈 규칙
    · 어떤 달의 예약은 "3개월 전 그 달의 마지막 월요일"에 열립니다.
      예) 2026년 11월 → 8월 마지막 월요일(8/31) 오픈
-   · 아직 오픈 전인 달의 날짜는 예약할 수 없습니다.
-   · 지난 날짜(오늘 이전)도 예약할 수 없습니다.
-   ※ 날짜에서 계산하므로 연도가 바뀌어도 그대로 맞습니다. 표 관리가 필요 없습니다.
+   · 아직 오픈 전인 달의 날짜는 예약할 수 없습니다.  
    ============================================================ */
 
 // 어떤 해·달의 "마지막 월요일" (로컬 기준)
@@ -648,6 +650,7 @@ function renderRoomInfo() {
   $("#roomInfo").innerHTML = `
     <div class="info-tag"><b>${esc(r.label)}</b> · 인천고 신관동 ${r.floor}층</div>
     ${esc(r.note || "")}<br><br>
+    <b>최대수용인원</b>: ${r.capacity ? esc(r.capacity) + "명" : "미정"}<br>
     <b>부대시설</b>: ${r.options.length ? esc(r.options.join(", ")) : "없음"}<br>
     <b>예약방식</b>: 승인 절차 없이 먼저 신청한 센터가 사용합니다.<br>
     <b>취소</b>: 신청한 센터 계정에서만 가능합니다.<br>
@@ -820,7 +823,11 @@ function openForm(date) {
       </tr>
       <tr>
         <th class="req">참석인원수</th>
-        <td colspan="3"><input type="number" id="fCount" min="1" placeholder="명" style="max-width:120px"></td>
+        <td colspan="3">
+          <input type="number" id="fCount" min="1" placeholder="명" style="max-width:120px">
+          <span class="hint" id="fCap"></span>
+          <div id="fCapWarn"></div>
+        </td>
       </tr>
     </table>
     <div class="warn">
@@ -845,6 +852,10 @@ function openForm(date) {
       ? rr.options.map(o=>`<label class="chk"><input type="checkbox" value="${esc(o)}"> ${esc(o)}</label>`).join("")
       : '<span class="hint">이 설비에는 등록된 부대시설이 없습니다.</span>';
 
+    // 참석인원 정원 안내
+    $("#fCap").textContent = rr.capacity ? ` 최대 ${rr.capacity}명` : "";
+    checkCapacity();
+
     // 예약 오픈 여부 먼저 안내
     const win = dt ? bookingWindow(dt) : { ok: true };
     if (!win.ok) {
@@ -860,8 +871,20 @@ function openForm(date) {
           `· ${spanOf(r)} — ${esc(r.centers.center_name)} (${esc(r.title)})`).join("<br>")
       : `<b>${dt}</b> 종일 비어 있습니다.`;
   };
+
+  // 참석인원이 정원을 넘으면 빨간 안내(막지는 않음)
+  const checkCapacity = () => {
+    const rr = roomOf($("#fRoom").value);
+    const cnt = +$("#fCount").value;
+    if (rr.capacity && cnt > rr.capacity) {
+      $("#fCapWarn").innerHTML = `<span style="color:#c0392b;font-size:11px">※ 최대수용인원(${rr.capacity}명)을 넘습니다. 예약은 되지만 인원을 확인해 주세요.</span>`;
+    } else {
+      $("#fCapWarn").innerHTML = "";
+    }
+  };
   $("#fRoom").onchange = refresh;
   $("#fDate").onchange = refresh;
+  $("#fCount").oninput = checkCapacity;
   refresh();
 
   $("#btnSave").onclick = async () => {
@@ -886,6 +909,12 @@ function openForm(date) {
     if (e2 <= s) return err("종료 시각이 시작 시각보다 뒤여야 합니다.");
     if (!purpose) return err("내용을 입력하세요.");
     if (!count || +count < 1) return err("참석인원수를 입력하세요.");
+
+    // 정원 초과 시 경고(막지 않고 확인만 받음)
+    const rr = roomOf(rid);
+    if (rr.capacity && +count > rr.capacity) {
+      if (!confirm(`${rr.label}의 최대수용인원은 ${rr.capacity}명입니다.\n참석인원 ${count}명으로 그대로 예약할까요?`)) return;
+    }
 
     const row = {
       room_id: rid, title, purpose,
