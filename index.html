@@ -204,13 +204,14 @@
       <button class="btn-login" id="btnLogin">로그인</button>
     </div>
     <div class="login-foot">
-      센터별 공용 계정으로 로그인합니다.<br> 
+      센터별 공용 계정으로 로그인합니다.<br>
     </div>
   </div>
 </div>
 
 <div id="app" style="display:none">
   <div class="demo-bar" id="demoBar" style="display:none">
+     Supabase 설정을 넣기 전까지 예약 내용은 이 브라우저에만 저장되고 새로고침하면 사라집니다.
   </div>
 
   <div class="topbar">
@@ -289,7 +290,7 @@
        anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
    ============================================================ */
 const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";   
-const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";   
+const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";  
 
 // 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
 const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
@@ -317,19 +318,19 @@ let store;
 
 if (DEMO) {
   const DEMO_ROOMS = [
-    { id:"105", label:"상담준비실 (105)", floor:1, note:"Wee센터 배치실. 사용 전 해당 센터와 협의.",           options:["전자칠판"],          capacity:24명 },
-    { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                 options:["마이크","빔프로젝터"], capacity:127명 },
-    { id:"203", label:"스터디카페 (203)", floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["TV거치대"],          capacity:30명 },
-    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["전자칠판"],          capacity:40명 },
-    { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["전자칠판"],          capacity:40명 },
-    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:[],                    capacity:40명 },
-    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:[],                    capacity:30명 },
-    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["빔프로젝터"],        capacity:60명 },
-    { id:"304", label:"다목적실 (304)",   floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능",          options:[],                    capacity:30명 },
-    { id:"305", label:"다목적실 (305)",   floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능",          options:[],                    capacity:30명 },
-    { id:"306", label:"다목적실 (306)",   floor:3, note:"소규모회의 공간.",                                     options:[],                    capacity:12명 },
-    { id:"307", label:"다목적실 (307)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:40명 },
-    { id:"308", label:"다목적실 (308)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:40명 }
+    { id:"105", label:"상담준비실 (105)", floor:1, note:"Wee센터 배치실. 사용 전 해당 센터와 협의.",           options:["전자칠판"],          capacity:24 },
+    { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                 options:["마이크","빔프로젝터"], capacity:127 },
+    { id:"203", label:"스터디카페 (203)", floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["TV거치대"],          capacity:30 },
+    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["전자칠판"],          capacity:40 },
+    { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 모둠 활동 중심 배치.",          options:["전자칠판"],          capacity:40 },
+    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:[],                    capacity:40 },
+    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:[],                    capacity:30 },
+    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["빔프로젝터"],        capacity:60 },
+    { id:"304", label:"다목적실 (304)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:30 },
+    { id:"305", label:"다목적실 (305)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:30 },
+    { id:"306", label:"다목적실 (306)",   floor:3, note:"소그룹 회의용.", options:[],                    capacity:12 },
+    { id:"307", label:"다목적실 (307)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:40 },
+    { id:"308", label:"다목적실 (308)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:40 }
   ];
   const DEMO_CENTERS = [
     { user_id:"wee",     center_id:"wee",     center_name:"Wee센터",           phone:null },
@@ -487,7 +488,9 @@ const roomOf = id => state.rooms.find(r => r.id === id);
    예약 오픈 규칙
    · 어떤 달의 예약은 "3개월 전 그 달의 마지막 월요일"에 열립니다.
      예) 2026년 11월 → 8월 마지막 월요일(8/31) 오픈
-   · 아직 오픈 전인 달의 날짜는 예약할 수 없습니다.  
+   · 아직 오픈 전인 달의 날짜는 예약할 수 없습니다.
+   · 지난 날짜(오늘 이전)도 예약할 수 없습니다.
+   ※ 날짜에서 계산하므로 연도가 바뀌어도 그대로 맞습니다. 표 관리가 필요 없습니다.
    ============================================================ */
 
 // 어떤 해·달의 "마지막 월요일" (로컬 기준)
