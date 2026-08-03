@@ -63,6 +63,8 @@
   .room-list li:hover { background: #f4f8fc; }
   .room-list li.on { background: #d6e6f5; font-weight: bold; color: #1a5490; }
   .room-list li small { display: block; color: #8b96a5; font-weight: normal; font-size: 10px; margin-top: 2px; }
+  .owner-badge { display: inline-block; background: #eaf1fb; border: 1px solid #b9d3ea; color: #2b5c8a; font-size: 9px; font-weight: normal; padding: 0 4px; border-radius: 8px; margin-left: 4px; vertical-align: 1px; }
+  .owner-badge.big { font-size: 11px; padding: 1px 7px; margin-left: 0; }
   .room-list li.on small { color: #4a7ba8; }
   .today-body { max-height: 260px; overflow-y: auto; }
   .today-row {
@@ -204,7 +206,7 @@
       <button class="btn-login" id="btnLogin">로그인</button>
     </div>
     <div class="login-foot">
-      센터별 공용 계정으로 로그인합니다.<br>
+      센터별 공용 계정으로 로그인합니다.<br>      
     </div>
   </div>
 </div>
@@ -290,7 +292,7 @@
        anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
    ============================================================ */
 const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";   
-const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP";  
+const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP"
 
 // 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
 const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
@@ -318,19 +320,22 @@ let store;
 
 if (DEMO) {
   const DEMO_ROOMS = [
-    { id:"105", label:"상담준비실 (105)", floor:1, note:"Wee센터 배치실. 사용 전 해당 센터와 협의.",           options:["전자칠판"],          capacity:24 },
-    { id:"106", label:"율목관 (106)",     floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                 options:["마이크","빔프로젝터"], capacity:127 },
-    { id:"203", label:"스터디카페 (203)", floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["TV거치대"],          capacity:30 },
-    { id:"206", label:"강의실 (206)",     floor:2, note:"결대로진로센터 배치실. 사용 전 해당 센터와 협의.",     options:["전자칠판"],          capacity:40 },
-    { id:"207", label:"모둠활동실 (207)", floor:2, note:"결대로진로센터 배치실. 모둠 활동 중심 배치.",          options:["전자칠판"],          capacity:40 },
-    { id:"301", label:"강의실 (301)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:[],                    capacity:40 },
-    { id:"302", label:"회의실 (302)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:[],                    capacity:30 },
-    { id:"303", label:"강의실 (303)",     floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",         options:["빔프로젝터"],        capacity:60 },
-    { id:"304", label:"다목적실 (304)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:30 },
-    { id:"305", label:"다목적실 (305)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:30 },
-    { id:"306", label:"다목적실 (306)",   floor:3, note:"소그룹 회의용.", options:[],                    capacity:12 },
-    { id:"307", label:"다목적실 (307)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:40 },
-    { id:"308", label:"다목적실 (308)",   floor:3, note:"3층 전체 공용공간.",                                   options:[],                    capacity:40 }
+    { id:"102-1", label:"상담부스 (102 창가)", floor:1, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:[],                    capacity:1,   open_min:0,   close_min:1440, owner_center:"wee" },
+    { id:"102-2", label:"상담부스 (102 복도)", floor:1, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:[],                    capacity:1,   open_min:0,   close_min:1440, owner_center:"wee" },
+    { id:"106",   label:"율목관 (106)",        floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                                   options:["마이크","빔프로젝터"], capacity:127, open_min:0,   close_min:1440, owner_center:null },
+    { id:"203",   label:"스터디카페 (203)",    floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:["TV거치대"],          capacity:30,  open_min:0,   close_min:1440, owner_center:"jinro" },
+    { id:"204-1", label:"상담실 (204-1)",      floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다. 이용 09:00~18:00.", options:[], capacity:4, open_min:540, close_min:1080, owner_center:"jinro" },
+    { id:"204-2", label:"상담실 (204-2)",      floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다. 이용 09:00~18:00.", options:[], capacity:4, open_min:540, close_min:1080, owner_center:"jinro" },
+    { id:"206",   label:"강의실 (206)",        floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:["전자칠판"],          capacity:40,  open_min:0,   close_min:1440, owner_center:"jinro" },
+    { id:"207",   label:"모둠활동실 (207)",    floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:["전자칠판"],          capacity:40,  open_min:0,   close_min:1440, owner_center:"jinro" },
+    { id:"301",   label:"강의실 (301)",        floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",                          options:[],                    capacity:40,  open_min:0,   close_min:1440, owner_center:null },
+    { id:"302",   label:"회의실 (302)",        floor:3, note:"3층 전체 공용공간. 센터 간 회의용.",                                    options:[],                    capacity:30,  open_min:0,   close_min:1440, owner_center:null },
+    { id:"303",   label:"강의실 (303)",        floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",                          options:["빔프로젝터"],        capacity:60,  open_min:0,   close_min:1440, owner_center:null },
+    { id:"304",   label:"다목적실 (304)",      floor:3, note:"3층 전체 공용공간.",                                                    options:[],                    capacity:30,  open_min:0,   close_min:1440, owner_center:null },
+    { id:"305",   label:"다목적실 (305)",      floor:3, note:"3층 전체 공용공간.",                                                    options:[],                    capacity:30,  open_min:0,   close_min:1440, owner_center:null },
+    { id:"306",   label:"다목적실 (306)",      floor:3, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:[],                capacity:12,  open_min:0,   close_min:1440, owner_center:"clinic" },
+    { id:"307",   label:"다목적실 (307)",      floor:3, note:"3층 전체 공용공간.",                                                    options:[],                    capacity:40,  open_min:0,   close_min:1440, owner_center:null },
+    { id:"308",   label:"다목적실 (308)",      floor:3, note:"3층 전체 공용공간.",                                                    options:[],                    capacity:40,  open_min:0,   close_min:1440, owner_center:null }
   ];
   const DEMO_CENTERS = [
     { user_id:"wee",     center_id:"wee",     center_name:"Wee센터",           phone:null },
@@ -483,31 +488,18 @@ const spanOf   = r => `${toHHMM(startMin(r))}~${toHHMM(endMin(r))}`;
 // (이걸 고정해 두면 자정을 넘긴 다음날 아침에 어제 예약이 '오늘'로 보입니다)
 let today = new Date();
 const roomOf = id => state.rooms.find(r => r.id === id);
+// 담당 센터 짧은 이름(배지용). 공용이면 빈 문자열.
+const ownerName = r => {
+  if (!r || !r.owner_center) return "";
+  const c = state.centers.find(x => x.center_id === r.owner_center);
+  return c ? c.center_name : "";
+};
 
 /* ============================================================
-   예약 오픈 규칙
-   · 어떤 달의 예약은 "3개월 전 그 달의 마지막 월요일"에 열립니다.
-     예) 2026년 11월 → 8월 마지막 월요일(8/31) 오픈
-   · 아직 오픈 전인 달의 날짜는 예약할 수 없습니다.
-   · 지난 날짜(오늘 이전)도 예약할 수 없습니다.
-   ※ 날짜에서 계산하므로 연도가 바뀌어도 그대로 맞습니다. 표 관리가 필요 없습니다.
+   예약 가능 날짜 규칙
+   · 오늘 이후 날짜는 언제든 예약 가능합니다. (사전 오픈 제한 없음)
+   · 지난 날짜(오늘 이전)만 막습니다.
    ============================================================ */
-
-// 어떤 해·달의 "마지막 월요일" (로컬 기준)
-function lastMondayOfMonth(y, mIndex0) {          // mIndex0: 0=1월
-  const d = new Date(y, mIndex0 + 1, 0);          // 그 달의 마지막 날
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));// 가장 가까운 이전(또는 당일) 월요일
-  return d;
-}
-
-// 대상 연·월(1~12)의 예약이 열리는 날짜(자정)
-function openDateFor(year, month1) {
-  let y = year, m0 = (month1 - 1) - 3;            // 3개월 전
-  while (m0 < 0) { m0 += 12; y -= 1; }
-  const d = lastMondayOfMonth(y, m0);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
 
 // 'YYYY-MM-DD' 날짜가 지금 예약 가능한지 판정
 function bookingWindow(dateStr) {
@@ -515,10 +507,7 @@ function bookingWindow(dateStr) {
   const target = new Date(y, m - 1, day); target.setHours(0, 0, 0, 0);
   const t0 = new Date(); t0.setHours(0, 0, 0, 0);         // 오늘 자정
 
-  if (target < t0) return { ok: false, reason: "past" };  // 지난 날짜
-
-  const open = openDateFor(y, m);
-  if (t0 < open) return { ok: false, reason: "not-open", open };  // 아직 오픈 전
+  if (target < t0) return { ok: false, reason: "past" };  // 지난 날짜만 차단
   return { ok: true };
 }
 
@@ -595,9 +584,10 @@ try { const me = await store.restore(); if (me) await enter(me); } catch (e) { c
    [7] 화면 구성
    ============================================================ */
 function initUI() {
-  $("#roomList").innerHTML = state.rooms.map(r =>
-    `<li data-id="${esc(r.id)}"${r.id===state.roomId?' class="on"':""}>${esc(r.label)}<small>${r.floor}층</small></li>`
-  ).join("");
+  $("#roomList").innerHTML = state.rooms.map(r => {
+    const own = ownerName(r);
+    return `<li data-id="${esc(r.id)}"${r.id===state.roomId?' class="on"':""}>${esc(r.label)}${own?`<span class="owner-badge">${esc(own)} 담당</span>`:""}<small>${r.floor}층</small></li>`;
+  }).join("");
   $("#roomList").onclick = e => {
     const li = e.target.closest("li"); if (!li) return;
     pickRoom(li.dataset.id);
@@ -644,21 +634,22 @@ function shift(delta) {
 function renderRoomInfo() {
   const r = roomOf(state.roomId);
   $("#calRoom").textContent = r.label;
-  // 지금 보고 있는 달이 언제부터 예약 가능한지
-  const openD = openDateFor(state.y, state.m);
-  const t0 = new Date(); t0.setHours(0,0,0,0);
-  const openInfo = t0 < openD
-    ? `<span style="color:#c0392b"><b>${state.y}년 ${state.m}월</b>은 <b>${fmtDate(openD)}</b>부터 예약 가능</span>`
-    : `<span style="color:#3d7a24"><b>${state.y}년 ${state.m}월</b> 예약 열려 있음</span>`;
+  // 이용 가능 시간대 (종일이면 표시 생략)
+  const oMin = r.open_min ?? 0, cMin = r.close_min ?? 1440;
+  const timeInfo = (oMin > 0 || cMin < 1440)
+    ? `<b>이용시간</b>: ${toHHMM(oMin)} ~ ${toHHMM(cMin)} <span style="color:#c0392b">(이 시간대만 예약 가능)</span><br>`
+    : "";
+  const own = ownerName(r);
+  const ownerLine = own
+    ? `<b>담당센터</b>: <span class="owner-badge big">${esc(own)}</span> <span class="hint">담당 센터가 우선 사용합니다</span><br>`
+    : `<b>담당센터</b>: 공용 (별도 담당 없음)<br>`;
   $("#roomInfo").innerHTML = `
     <div class="info-tag"><b>${esc(r.label)}</b> · 인천고 신관동 ${r.floor}층</div>
     ${esc(r.note || "")}<br><br>
-    <b>최대수용인원</b>: ${r.capacity ? esc(r.capacity) + "명" : "미정"}<br>
-    <b>부대시설</b>: ${r.options.length ? esc(r.options.join(", ")) : "없음"}<br>
+    ${ownerLine}<b>최대수용인원</b>: ${r.capacity ? esc(r.capacity) + "명" : "미정"}<br>
+    ${timeInfo}<b>부대시설</b>: ${r.options.length ? esc(r.options.join(", ")) : "없음"}<br>
     <b>예약방식</b>: 승인 절차 없이 먼저 신청한 센터가 사용합니다.<br>
-    <b>취소</b>: 신청한 센터 계정에서만 가능합니다.<br>
-    <b>예약오픈</b>: 이용하려는 달의 <b>3개월 전 마지막 주 월요일</b>에 열립니다.<br>
-    <div style="margin-top:5px;padding:5px 7px;background:#f7f9fb;border:1px solid #e3e8ee">${openInfo}</div>`;
+    <b>취소</b>: 신청한 센터 계정에서만 가능합니다.`;
 }
 
 /* ============================================================
@@ -741,11 +732,11 @@ function renderCal() {
       if (!d) { html += '<td class="pad"></td>'; continue; }
       const date = `${state.y}-${pad(state.m)}-${pad(d)}`;
       const dcls = i === 0 ? "sun" : i === 6 ? "sat" : "";
-      const win = bookingWindow(date);          // 예약 오픈 여부
+      const win = bookingWindow(date);          // 예약 가능 여부(지난 날짜만 차단)
       let list = rowsOf(state.roomId, date);
       if (state.onlyMine) list = list.filter(isMine);
       const lockCls = win.ok ? "" : " locked";
-      html += `<td class="clickable${date===tStr?" today":""}${lockCls}" data-date="${date}"${win.ok?"":` title="${win.reason==='past'?'지난 날짜':'예약 오픈 전 ('+fmtDate(win.open)+' 오픈)'}"`}>
+      html += `<td class="clickable${date===tStr?" today":""}${lockCls}" data-date="${date}"${win.ok?"":` title="지난 날짜"`}>
         <div class="daynum ${dcls}">${pad(d)}</div>
         ${list.map(r => `<div class="bk${isMine(r)?" mine":""}" data-id="${r.id}">
             <span class="t">(${spanOf(r)})</span> ${esc(r.centers.center_name)}
@@ -859,13 +850,10 @@ function openForm(date) {
     $("#fCap").textContent = rr.capacity ? ` 최대 ${rr.capacity}명` : "";
     checkCapacity();
 
-    // 예약 오픈 여부 먼저 안내
+    // 지난 날짜 안내
     const win = dt ? bookingWindow(dt) : { ok: true };
     if (!win.ok) {
-      const msg = win.reason === "past"
-        ? `<b>${dt}</b> 는 지난 날짜라 예약할 수 없습니다.`
-        : `<b>${dt}</b> 는 아직 예약 오픈 전입니다. 이 날짜는 <b>${fmtDate(win.open)}</b> 부터 예약할 수 있습니다.`;
-      $("#fAvail").innerHTML = `<span style="color:#c0392b">${msg}</span>`;
+      $("#fAvail").innerHTML = `<span style="color:#c0392b"><b>${dt}</b> 는 지난 날짜라 예약할 수 없습니다.</span>`;
       return;
     }
     const list = rowsOf(rid, dt);
@@ -900,21 +888,24 @@ function openForm(date) {
 
     if (!dt) return err("예약일자를 선택하세요.");
 
-    // 예약 오픈 규칙 검사 (지난 날짜·오픈 전 날짜 차단)
+    // 지난 날짜 차단
     const win = bookingWindow(dt);
-    if (!win.ok) {
-      return err(win.reason === "past"
-        ? "지난 날짜는 예약할 수 없습니다."
-        : `이 날짜는 아직 예약 오픈 전입니다. <b>${fmtDate(win.open)}</b> 부터 예약할 수 있습니다.<br>(예약은 이용하려는 달의 3개월 전 마지막 주 월요일에 열립니다.)`);
-    }
+    if (!win.ok) return err("지난 날짜는 예약할 수 없습니다.");
 
     if (!title) return err("제목을 입력하세요.");
     if (e2 <= s) return err("종료 시각이 시작 시각보다 뒤여야 합니다.");
+
+    // 이용 가능 시간대 제한 (예: 상담실 09:00~18:00)
+    const rr = roomOf(rid);
+    const oMin = rr.open_min ?? 0, cMin = rr.close_min ?? 1440;
+    if (s < oMin || e2 > cMin) {
+      return err(`이 설비는 <b>${toHHMM(oMin)}~${toHHMM(cMin)}</b> 시간대에만 예약할 수 있습니다.`);
+    }
+
     if (!purpose) return err("내용을 입력하세요.");
     if (!count || +count < 1) return err("참석인원수를 입력하세요.");
 
     // 정원 초과 시 경고(막지 않고 확인만 받음)
-    const rr = roomOf(rid);
     if (rr.capacity && +count > rr.capacity) {
       if (!confirm(`${rr.label}의 최대수용인원은 ${rr.capacity}명입니다.\n참석인원 ${count}명으로 그대로 예약할까요?`)) return;
     }
