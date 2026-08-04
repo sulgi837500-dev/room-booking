@@ -206,8 +206,8 @@
       <button class="btn-login" id="btnLogin">로그인</button>
     </div>
     <div class="login-foot">
-      센터별 공용 계정으로 로그인합니다.<br>      
-    </div>
+      센터별 공용 계정으로 로그인합니다.<br>
+       </div>
   </div>
 </div>
 
@@ -291,8 +291,8 @@
        Supabase 대시보드 → Project Settings → API 에서 복사합니다.
        anon key 는 공개돼도 되는 키입니다. 권한은 서버(RLS)가 정합니다.
    ============================================================ */
-const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";   
-const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP"
+const SUPABASE_URL      = "https://gwggcqgdnsucuvtilarx.supabase.co";  
+const SUPABASE_ANON_KEY = "sb_publishable_cFmpgIi5YdNB7sK-KmqtNA_dEe_7EgP"; 
 
 // 로그인 아이디 뒤에 자동으로 붙는 부분. 실제로 메일이 가지 않습니다.
 const AUTH_DOMAIN_SUFFIX = "@ice-center.local";
@@ -320,22 +320,17 @@ let store;
 
 if (DEMO) {
   const DEMO_ROOMS = [
-    { id:"102-1", label:"상담부스 (102 창가)", floor:1, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:[],                    capacity:1,   open_min:0,   close_min:1440, owner_center:"wee" },
-    { id:"102-2", label:"상담부스 (102 복도)", floor:1, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:[],                    capacity:1,   open_min:0,   close_min:1440, owner_center:"wee" },
+    { id:"102-1", label:"상담부스 (102 창가)", floor:1, note:"담당 센터가 우선 사용합니다. 사용 전 담당 센터와 협의해 주세요.",       options:[],                    capacity:1,   open_min:0,   close_min:1440, owner_center:"wee" },
+    { id:"102-2", label:"상담부스 (102 복도)", floor:1, note:"담당 센터가 우선 사용합니다. 사용 전 담당 센터와 협의해 주세요.",       options:[],                    capacity:1,   open_min:0,   close_min:1440, owner_center:"wee" },
     { id:"106",   label:"율목관 (106)",        floor:1, note:"1층 율목관. 대규모 행사·집합연수용.",                                   options:["마이크","빔프로젝터"], capacity:127, open_min:0,   close_min:1440, owner_center:null },
-    { id:"203",   label:"스터디카페 (203)",    floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:["TV거치대"],          capacity:30,  open_min:0,   close_min:1440, owner_center:"jinro" },
-    { id:"204-1", label:"상담실 (204-1)",      floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다. 이용 09:00~18:00.", options:[], capacity:4, open_min:540, close_min:1080, owner_center:"jinro" },
-    { id:"204-2", label:"상담실 (204-2)",      floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다. 이용 09:00~18:00.", options:[], capacity:4, open_min:540, close_min:1080, owner_center:"jinro" },
-    { id:"206",   label:"강의실 (206)",        floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:["전자칠판"],          capacity:40,  open_min:0,   close_min:1440, owner_center:"jinro" },
-    { id:"207",   label:"모둠활동실 (207)",    floor:2, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:["전자칠판"],          capacity:40,  open_min:0,   close_min:1440, owner_center:"jinro" },
+    { id:"203",   label:"스터디카페 (203)",    floor:2, note:"담당 센터가 우선 사용합니다. 사용 전 담당 센터와 협의해 주세요.",       options:["TV거치대"],          capacity:30,  open_min:0,   close_min:1440, owner_center:"jinro" },
+    { id:"204-1", label:"상담실 (204-1)",      floor:2, note:"담당 센터가 우선 사용합니다. 사용 전 담당 센터와 협의해 주세요. 이용 09:00~18:00.", options:[], capacity:4, open_min:540, close_min:1080, owner_center:"jinro" },
+    { id:"204-2", label:"상담실 (204-2)",      floor:2, note:"담당 센터가 우선 사용합니다. 사용 전 담당 센터와 협의해 주세요. 이용 09:00~18:00.", options:[], capacity:4, open_min:540, close_min:1080, owner_center:"jinro" },
+    { id:"206",   label:"강의실 (206)",        floor:2, note:"담당 센터가 우선 사용합니다. 사용 전 담당 센터와 협의해 주세요.",       options:["전자칠판"],          capacity:40,  open_min:0,   close_min:1440, owner_center:"jinro" },
+    { id:"207",   label:"모둠활동실 (207)",    floor:2, note:"담당 센터가 우선 사용합니다. 사용 전 담당 센터와 협의해 주세요.",       options:["전자칠판"],          capacity:40,  open_min:0,   close_min:1440, owner_center:"jinro" },
     { id:"301",   label:"강의실 (301)",        floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",                          options:[],                    capacity:40,  open_min:0,   close_min:1440, owner_center:null },
-    { id:"302",   label:"회의실 (302)",        floor:3, note:"3층 전체 공용공간. 센터 간 회의용.",                                    options:[],                    capacity:30,  open_min:0,   close_min:1440, owner_center:null },
-    { id:"303",   label:"강의실 (303)",        floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",                          options:["빔프로젝터"],        capacity:60,  open_min:0,   close_min:1440, owner_center:null },
-    { id:"304",   label:"다목적실 (304)",      floor:3, note:"3층 전체 공용공간.",                                                    options:[],                    capacity:30,  open_min:0,   close_min:1440, owner_center:null },
-    { id:"305",   label:"다목적실 (305)",      floor:3, note:"3층 전체 공용공간.",                                                    options:[],                    capacity:30,  open_min:0,   close_min:1440, owner_center:null },
-    { id:"306",   label:"다목적실 (306)",      floor:3, note:"담당 센터가 우선 예약할 경우 예약이 취소될 수 있습니다.",       options:[],                capacity:12,  open_min:0,   close_min:1440, owner_center:"clinic" },
-    { id:"307",   label:"다목적실 (307)",      floor:3, note:"3층 전체 공용공간.",                                                    options:[],                    capacity:40,  open_min:0,   close_min:1440, owner_center:null },
-    { id:"308",   label:"다목적실 (308)",      floor:3, note:"3층 전체 공용공간.",                                                    options:[],                    capacity:40,  open_min:0,   close_min:1440, owner_center:null }
+    { id:"302",   label:"다목적실 (302)",      floor:3, note:"담당 센터가 우선 사용합니다. 사용 전 담당 센터와 협의해 주세요.",       options:[],                    capacity:12,  open_min:0,   close_min:1440, owner_center:"clinic" },
+    { id:"303",   label:"강의실 (303)",        floor:3, note:"3층 전체 공용공간. 별도 협의 없이 사용 가능.",                          options:["빔프로젝터"],        capacity:60,  open_min:0,   close_min:1440, owner_center:null }
   ];
   const DEMO_CENTERS = [
     { user_id:"wee",     center_id:"wee",     center_name:"Wee센터",           phone:null },
@@ -826,8 +821,6 @@ function openForm(date) {
     </table>
     <div class="warn">
       <b>개인정보는 적지 마세요.</b>
-      제목·내용에 학생 이름, 학교·학년·반, 연락처를 적지 마십시오.
-      이 시스템은 개인정보를 담지 않도록 만들었습니다. 급한 연락은 센터 대표번호로 합니다.
     </div>
     <div class="guide">
       <b>안내</b>
